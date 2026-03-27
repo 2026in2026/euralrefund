@@ -7,7 +7,7 @@ const OPERATORS = {
   "DSB (Danmark)": { threshold: 60, rate: 0.5, authority: "Trafikstyrelsen", url: "https://www.trafikstyrelsen.dk" },
   "DB (Tyskland)": { threshold: 60, rate: 0.5, authority: "Bundesnetzagentur", url: "https://www.bundesnetzagentur.de" },
   "SNCF (Frankrig)": { threshold: 60, rate: 0.25, authority: "ARAFER", url: "https://www.autorite-transports.fr" },
-  "Eurostar": { threshold: 60, rate: 0.5, authority: "ORR (UK)", url: "https://www.orr.gov.uk" },
+  "Eurostar": { threshold: 60, rate: 0.5, authority: "ORRh (UK)", url: "https://www.orr.gov.uk" },
   "NS (Holland)": { threshold: 30, rate: 0.5, authority: "ACM", url: "https://www.acm.nl" },
   "ÖBB (Østrig)": { threshold: 60, rate: 0.5, authority: "Schienen-Control", url: "https://www.schienen-control.gv.at" },
   "Trenitalia (Italien)": { threshold: 60, rate: 0.25, authority: "ART", url: "https://www.autorita-trasporti.it" },
@@ -106,7 +106,7 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
         ? { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } }
         : { type: "document", source: { type: "base64", media_type: mediaType, data: base64 } };
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/analyse-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
