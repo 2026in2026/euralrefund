@@ -85,7 +85,8 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: [contentBlock, { type: "text", text: `You are a ticket reader. Analyze this train ticket carefully and return ONLY valid JSON without markdown or explanation: { "fra": "departure station full name", "til": "destination station full name", "dato": "DD.MM.YYYY", "tidspunkt": "HH:MM", "operatoer": "railway company name (e.g. DSB, DB, SNCF, Eurostar, NS, OBB, Trenitalia, Renfe)", "billetpris": 549, "valuta": "DKK", "bekreeftet": true } If you cannot find a field, set it to null.` }] }] })
       });
       const data = await response.json();
-      const text = data.content?.find(b => b.type === "text")?.text || "{}";
+      if (!response.ok) throw new Error(data.error?.message || "API error");
+          const text = data.content?.find(b => b.type === "text")?.text || "{}";
       const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
       const normalizedOp = normalizeOperator(parsed.operatoer || parsed.operatør || "");
       setTicketData({ file, base64, mediaType });
