@@ -36,6 +36,64 @@ function normalizeOperator(raw) {
   ) || "";
 }
 
+// ─── Compact feedback widget shown at bottom of every step ──────────────────
+function MicroFeedback({ stepName }) {
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [note, setNote] = useState("");
+  const [done, setDone] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const mono = "'DM Mono', monospace";
+
+  const submit = async () => {
+    if (!rating) return;
+    setSaving(true);
+    try {
+      await fetch("/api/send-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ step: stepName, rating, comment: note }),
+      });
+    } catch (_) {}
+    setDone(true);
+    setSaving(false);
+  };
+
+  if (done) return (
+    <div style={{ marginTop: 20, padding: "10px 14px", background: "rgba(76,175,122,0.07)", border: "1px solid rgba(76,175,122,0.18)", borderRadius: 8, display: "flex", alignItems: "center", gap: 8 }}>
+      <span style={{ fontSize: 16 }}>🙏</span>
+      <span style={{ fontFamily: mono, fontSize: 11, color: "#4CAF7A" }}>Thanks for the feedback!</span>
+    </div>
+  );
+
+  return (
+    <div style={{ marginTop: 20, padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <span style={{ fontFamily: mono, fontSize: 10, color: "#4a4a6a", letterSpacing: "0.1em", textTransform: "uppercase" }}>Quick feedback</span>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {[1,2,3,4,5].map(n => (
+            <button key={n} onClick={() => setRating(n)} onMouseEnter={() => setHovered(n)} onMouseLeave={() => setHovered(0)}
+              style={{ fontSize: 16, background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1,
+                transform: (hovered || rating) >= n ? "scale(1.25)" : "scale(1)",
+                transition: "transform 0.1s",
+                filter: (hovered || rating) >= n ? "none" : "grayscale(1) opacity(0.35)" }}>⭐</button>
+          ))}
+          {rating > 0 && (
+            <>
+              <input value={note} onChange={e => setNote(e.target.value)} placeholder="Optional note…"
+                style={{ marginLeft: 8, padding: "4px 8px", background: "#111128", border: "1px solid #2d2d4e", borderRadius: 6, color: "#e8e0d0", fontFamily: mono, fontSize: 11, outline: "none", width: 140 }} />
+              <button onClick={submit} disabled={saving}
+                style={{ marginLeft: 6, padding: "4px 10px", background: "#C8A96E", color: "#0a0a1a", border: "none", borderRadius: 6, cursor: "pointer", fontFamily: mono, fontSize: 11, fontWeight: 700 }}>
+                {saving ? "…" : "Send"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProgressBar({ step }) {
   const steps = ["Ticket", "Details", "Assessment", "Form"];
   const current = STEPS.indexOf(step);
@@ -56,6 +114,7 @@ function ProgressBar({ step }) {
     </div>
   );
 }
+
 function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
@@ -80,13 +139,19 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
       const contentBlock = isImage
         ? { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } }
         : { type: "document", source: { type: "base64", media_type: mediaType, data: base64 } };
+
       const response = await fetch("/api/analyse-ticket", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: [contentBlock, { type: "text", text: `You are a ticket reader. Analyze this train ticket carefully and return ONLY valid JSON without markdown or explanation: { "fra": "departure station full name", "til": "destination station full name", "dato": "DD.MM.YYYY", "tidspunkt": "HH:MM", "operatoer": "railway company name (e.g. DSB, DB, SNCF, Eurostar, NS, OBB, Trenitalia, Renfe)", "billetpris": 549, "valuta": "DKK", "bekreeftet": true } If you cannot find a field, set it to null.` }] }] })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: [contentBlock, { type: "text", text: `You are a ticket reader. Analyze this train ticket carefully and return ONLY valid JSON without markdown or explanation: { "fra": "departure station full name", "til": "destination station full name", "dato": "DD.MM.YYYY", "tidspunkt": "HH:MM", "operatoer": "railway company name (e.g. DSB, DB, SNCF, Eurostar, NS, OBB, Trenitalia, Renfe)", "billetpris": 549, "valuta": "DKK", "bekreeftet": true } If you cannot find a field, set it to null.` }] }]
+        })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error?.message || "API error");
-          const text = data.content?.find(b => b.type === "text")?.text || "{}";
+      const text = data.content?.find(b => b.type === "text")?.text || "{}";
       const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
       const normalizedOp = normalizeOperator(parsed.operatoer || parsed.operatør || "");
       setTicketData({ file, base64, mediaType });
@@ -99,11 +164,20 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
     }
   };
 
+  const skipToManual = () => {
+    setExtractedInfo({});
+    onNext();
+  };
+
   return (
     <div>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: 400 }}>Upload your ticket</h2>
       <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 28, fontFamily: "'DM Mono', monospace" }}>PDF or image — we read the details automatically</p>
-      <div onClick={() => fileRef.current.click()} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
+
+      <div
+        onClick={() => fileRef.current.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
         style={{ border: `2px dashed ${dragging ? "#C8A96E" : file ? "#4CAF7A" : "#2d2d4e"}`, borderRadius: 12, padding: "48px 32px", textAlign: "center", cursor: "pointer", background: dragging ? "rgba(200,169,110,0.05)" : file ? "rgba(76,175,122,0.05)" : "rgba(255,255,255,0.02)", transition: "all 0.2s ease" }}>
         <input ref={fileRef} type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
@@ -120,18 +194,35 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
           </div>
         )}
       </div>
+
       {error && <div style={{ color: "#ff6b6b", fontSize: 13, marginTop: 12, fontFamily: "'DM Mono', monospace" }}>{error}</div>}
-      <button onClick={analyze} disabled={!file || loading} style={{ marginTop: 24, width: "100%", padding: "16px", background: file && !loading ? "#C8A96E" : "#1a1a2e", color: file && !loading ? "#0a0a1a" : "#3a3a5a", border: "none", borderRadius: 8, cursor: file && !loading ? "pointer" : "not-allowed", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, letterSpacing: "0.05em", transition: "all 0.2s ease" }}>
+
+      <button onClick={analyze} disabled={!file || loading}
+        style={{ marginTop: 24, width: "100%", padding: "16px", background: file && !loading ? "#C8A96E" : "#1a1a2e", color: file && !loading ? "#0a0a1a" : "#3a3a5a", border: "none", borderRadius: 8, cursor: file && !loading ? "pointer" : "not-allowed", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, letterSpacing: "0.05em", transition: "all 0.2s ease" }}>
         {loading ? "⟳ Analysing ticket..." : "Analyse ticket →"}
       </button>
+
+      <button onClick={skipToManual}
+        style={{ marginTop: 10, width: "100%", padding: "11px", background: "transparent", color: "#4a4a6a", border: "1px solid #1e1e38", borderRadius: 8, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 12, transition: "all 0.2s ease" }}>
+        Skip — enter details manually →
+      </button>
+
+      <MicroFeedback stepName="upload" />
     </div>
   );
 }
+
 function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
   const operators = Object.keys(OPERATORS);
   const update = (k, v) => setExtractedInfo(p => ({ ...p, [k]: v }));
   const autoFilled = (key) => extractedInfo?.[key] !== null && extractedInfo?.[key] !== undefined && extractedInfo?.[key] !== "";
-  const fieldStyle = (key) => ({ width: "100%", padding: "12px 14px", background: autoFilled(key) ? "rgba(76,175,122,0.08)" : "#111128", border: `1px solid ${autoFilled(key) ? "rgba(76,175,122,0.5)" : "#2d2d4e"}`, borderRadius: 8, color: "#e8e0d0", fontFamily: "'DM Mono', monospace", fontSize: 14, outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" });
+  const fieldStyle = (key) => ({
+    width: "100%", padding: "12px 14px",
+    background: autoFilled(key) ? "rgba(76,175,122,0.08)" : "#111128",
+    border: `1px solid ${autoFilled(key) ? "rgba(76,175,122,0.5)" : "#2d2d4e"}`,
+    borderRadius: 8, color: "#e8e0d0", fontFamily: "'DM Mono', monospace", fontSize: 14,
+    outline: "none", boxSizing: "border-box", transition: "border-color 0.2s"
+  });
   const autoCount = ["fra","til","dato","tidspunkt","operatør","billetpris"].filter(k => autoFilled(k)).length;
   const canProceed = extractedInfo?.fra && extractedInfo?.til && extractedInfo?.operatør && extractedInfo?.forsinkelse && extractedInfo?.billetpris;
   const AutoBadge = () => <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>;
@@ -145,7 +236,8 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
           <span style={{ fontSize: 18 }}>✅</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#4CAF7A" }}>We read <strong>{autoCount} fields</strong> automatically — check and correct if needed</span>
         </div>
-      ) : <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 24, fontFamily: "'DM Mono', monospace" }}>Could not read ticket — please fill in manually</p>}
+      ) : <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 24, fontFamily: "'DM Mono', monospace" }}>Fill in your journey details below</p>}
+
       <div style={{ display: "grid", gap: 14 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {[{label:"From", key:"fra", ph:"Departure station"},{label:"To", key:"til", ph:"Destination station"}].map(({label,key,ph}) => (
@@ -172,18 +264,23 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
           <label style={{ display: "block", color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 8, letterSpacing: "0.12em", textTransform: "uppercase" }}>What was the delay? <span style={{ color: "#CC4444" }}>*</span></label>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {DELAY_OPTIONS.map(d => (
-              <button key={d} onClick={() => update("forsinkelse", d)} style={{ padding: "12px 8px", borderRadius: 8, cursor: "pointer", background: extractedInfo?.forsinkelse===d ? "rgba(200,169,110,0.15)" : "#111128", border: `1px solid ${extractedInfo?.forsinkelse===d ? "#C8A96E" : "#2d2d4e"}`, color: extractedInfo?.forsinkelse===d ? "#C8A96E" : "#6a6a8a", fontFamily: "'DM Mono', monospace", fontSize: 12, transition: "all 0.15s ease", fontWeight: extractedInfo?.forsinkelse===d ? 700 : 400 }}>{d}</button>
+              <button key={d} onClick={() => update("forsinkelse", d)}
+                style={{ padding: "12px 8px", borderRadius: 8, cursor: "pointer", background: extractedInfo?.forsinkelse===d ? "rgba(200,169,110,0.15)" : "#111128", border: `1px solid ${extractedInfo?.forsinkelse===d ? "#C8A96E" : "#2d2d4e"}`, color: extractedInfo?.forsinkelse===d ? "#C8A96E" : "#6a6a8a", fontFamily: "'DM Mono', monospace", fontSize: 12, transition: "all 0.15s ease", fontWeight: extractedInfo?.forsinkelse===d ? 700 : 400 }}>{d}</button>
             ))}
           </div>
         </div>
       </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 24 }}>
         <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #2d2d4e", borderRadius: 8, color: "#6a6a8a", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>← Back</button>
         <button onClick={onNext} disabled={!canProceed} style={{ padding: "14px", background: canProceed ? "#C8A96E" : "#1a1a2e", color: canProceed ? "#0a0a1a" : "#3a3a5a", border: "none", borderRadius: 8, cursor: canProceed ? "pointer" : "not-allowed", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, transition: "all 0.2s ease" }}>Calculate compensation →</button>
       </div>
+
+      <MicroFeedback stepName="details" />
     </div>
   );
 }
+
 function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   const op = OPERATORS[extractedInfo?.operatør];
   const delayMap = { "30-59 min": 45, "60-119 min": 90, "120+ min": 150 };
@@ -198,7 +295,11 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   const ourFee = compensation * 0.25;
   const youGet = compensation - ourFee;
   const currency = extractedInfo?.valuta || "DKK";
-  useEffect(() => { if (eligible) setCompensation({ compensation, ourFee, youGet, currency, op }); }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operatør]);
+
+  useEffect(() => {
+    if (eligible) setCompensation({ compensation, ourFee, youGet, currency, op });
+  }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operatør]);
+
   return (
     <div>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: 400 }}>Assessment</h2>
@@ -228,10 +329,12 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
         <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #2d2d4e", borderRadius: 8, color: "#6a6a8a", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>← Back</button>
         {eligible && <button onClick={onNext} style={{ padding: "14px", background: "#C8A96E", color: "#0a0a1a", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700 }}>Generate claim form →</button>}
       </div>
+      <MicroFeedback stepName="assessment" />
     </div>
   );
 }
 
+// Full-size feedback box used at the end (step 4 done state)
 function FeedbackBox() {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
@@ -239,46 +342,37 @@ function FeedbackBox() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const mono = "'DM Mono', monospace";
-
   const submit = async () => {
     if (!rating) return;
     setSubmitting(true);
-    try {
-      await fetch("/api/send-feedback", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, comment })
-      });
-    } catch(e) {}
-    setSubmitted(true);
-    setSubmitting(false);
+    try { await fetch("/api/send-feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ step: "done", rating, comment }) }); } catch(e) {}
+    setSubmitted(true); setSubmitting(false);
   };
-
   if (submitted) return (
     <div style={{ textAlign: "center", padding: "20px", background: "rgba(76,175,122,0.07)", border: "1px solid rgba(76,175,122,0.2)", borderRadius: 12, marginTop: 24 }}>
       <div style={{ fontSize: 28, marginBottom: 8 }}>🙏</div>
       <div style={{ fontFamily: mono, fontSize: 13, color: "#4CAF7A" }}>Thank you for your feedback!</div>
     </div>
   );
-
   return (
     <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "20px", marginTop: 24 }}>
       <div style={{ fontFamily: mono, fontSize: 11, color: "#6a6a8a", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>How was your experience?</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         {[1,2,3,4,5].map(n => (
           <button key={n} onClick={() => setRating(n)} onMouseEnter={() => setHovered(n)} onMouseLeave={() => setHovered(0)}
-            style={{ fontSize: 24, background: "none", border: "none", cursor: "pointer", transform: (hovered||rating) >= n ? "scale(1.2)" : "scale(1)", transition: "transform 0.15s", filter: (hovered||rating) >= n ? "none" : "grayscale(1) opacity(0.4)" }}>
-            ⭐
-          </button>
+            style={{ fontSize: 24, background: "none", border: "none", cursor: "pointer", transform: (hovered||rating) >= n ? "scale(1.2)" : "scale(1)", transition: "transform 0.15s", filter: (hovered||rating) >= n ? "none" : "grayscale(1) opacity(0.4)" }}>⭐</button>
         ))}
       </div>
       <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Optional comment..." rows={3}
         style={{ width: "100%", padding: "10px 12px", background: "#111128", border: "1px solid #2d2d4e", borderRadius: 8, color: "#e8e0d0", fontFamily: mono, fontSize: 12, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
-      <button onClick={submit} disabled={!rating || submitting} style={{ marginTop: 10, padding: "10px 20px", background: rating ? "#C8A96E" : "#1a1a2e", color: rating ? "#0a0a1a" : "#3a3a5a", border: "none", borderRadius: 8, cursor: rating ? "pointer" : "not-allowed", fontFamily: mono, fontSize: 12, fontWeight: 700 }}>
+      <button onClick={submit} disabled={!rating || submitting}
+        style={{ marginTop: 10, padding: "10px 20px", background: rating ? "#C8A96E" : "#1a1a2e", color: rating ? "#0a0a1a" : "#3a3a5a", border: "none", borderRadius: 8, cursor: rating ? "pointer" : "not-allowed", fontFamily: mono, fontSize: 12, fontWeight: 700 }}>
         {submitting ? "Sending..." : "Submit feedback"}
       </button>
     </div>
   );
 }
+
 function FormStep({ extractedInfo, compensation, onBack }) {
   const [subStep, setSubStep] = useState("details");
   const [name, setName] = useState("");
@@ -307,7 +401,8 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       if (!res.ok) throw new Error("Server error: " + res.status);
       const data = await res.json();
       const dl = (b64, filename) => {
-        const byteStr = atob(b64); const arr = new Uint8Array(byteStr.length);
+        const byteStr = atob(b64);
+        const arr = new Uint8Array(byteStr.length);
         for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
         const blob = new Blob([arr], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
@@ -316,14 +411,9 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       };
       dl(data.eu, "EU-claim-form-2024-949.pdf");
       setTimeout(() => dl(data.fuldmagt, "Power-of-Attorney-EU-Rail-Refund.pdf"), 800);
-      // Send email copy to company
-      fetch("/api/send-submission", {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ person: { name, email, address, iban }, info: payload.info, comp: payload.comp, euPdf: data.eu, fuldmagtPdf: data.fuldmagt })
-      }).catch(() => {});
+      fetch("/api/send-submission", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ person: { name, email, address, iban }, info: payload.info, comp: payload.comp, euPdf: data.eu, fuldmagtPdf: data.fuldmagt }) }).catch(() => {});
       setSubStep("done");
-    } catch(e) { setError("Error: " + e.message); }
-    finally { setLoading(false); }
+    } catch(e) { setError("Error: " + e.message); } finally { setLoading(false); }
   };
 
   if (subStep === "details") return (
@@ -353,6 +443,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
         <button onClick={onBack} style={{ padding:"13px", background:"transparent", border:"1px solid #2d2d4e", borderRadius:8, color:"#6a6a8a", cursor:"pointer", fontFamily:mono, fontSize:13 }}>← Back</button>
         <button onClick={() => setSubStep("sign")} disabled={!canGo} style={{ padding:"13px", background: canGo ? "#C8A96E" : "#1a1a2e", color: canGo ? "#0a0a1a" : "#3a3a5a", border:"none", borderRadius:8, cursor: canGo ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700, transition:"all 0.2s" }}>Continue to signature →</button>
       </div>
+      <MicroFeedback stepName="form-details" />
     </div>
   );
 
@@ -373,7 +464,8 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       </div>
       <div style={{ marginBottom:20 }}>
         <Lbl>Type your full name as signature *</Lbl>
-        <input value={signInput} onChange={e=>setSignInput(e.target.value)} placeholder="Type your full name..." style={{ ...inp, fontSize:16, fontFamily:"'Playfair Display', serif", borderColor: signed ? "rgba(76,175,122,0.5)" : "#2d2d4e", background: signed ? "rgba(76,175,122,0.05)" : "#111128" }} />
+        <input value={signInput} onChange={e=>setSignInput(e.target.value)} placeholder="Type your full name..."
+          style={{ ...inp, fontSize:16, fontFamily:"'Playfair Display', serif", borderColor: signed ? "rgba(76,175,122,0.5)" : "#2d2d4e", background: signed ? "rgba(76,175,122,0.05)" : "#111128" }} />
         <div style={{ fontFamily:mono, fontSize:10, color:"#4a4a6a", marginTop:6 }}>Your typed name serves as a digital signature on both documents.</div>
       </div>
       {error && <div style={{ color:"#ff6b6b", fontFamily:mono, fontSize:12, marginBottom:12 }}>{error}</div>}
@@ -383,6 +475,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
           {loading ? "⟳ Generating PDFs..." : "✍️ Sign and download PDF →"}
         </button>
       </div>
+      <MicroFeedback stepName="form-sign" />
     </div>
   );
 
@@ -413,6 +506,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
     </div>
   );
 }
+
 export default function App() {
   const [step, setStep] = useState("upload");
   const [ticketData, setTicketData] = useState(null);
