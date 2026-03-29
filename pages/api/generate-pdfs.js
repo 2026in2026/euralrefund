@@ -140,7 +140,7 @@ async function buildEuBlanket(info, comp, person) {
   field('Date', person.dato_signed||'', m+228, y+14, 120);
   field('Place', 'Denmark', m+228, y+28, 120);
   y += 62;
-  txt('SUBMIT TO: '+(info.operatoer||'')+' — '+(comp.authority||'')+' — '+(comp.url||''), m, y, 8, BLUE, true);
+  txt('SUBMIT TO: '+(info.operatoer||'')+' — '+(comp.authority||'')+' — '+(comp.authorityUrl||''), m, y, 8, BLUE, true);
   y += 13;
   txt('This form may be submitted electronically under EU Reg. 2021/782, Art. 18-19.', m, y, 7, MID);
 
