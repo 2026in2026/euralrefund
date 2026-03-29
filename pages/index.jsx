@@ -146,7 +146,7 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
-          messages: [{ role: "user", content: [contentBlock, { type: "text", text: `You are a ticket reader. Analyze this train ticket carefully and return ONLY valid JSON without markdown or explanation: { "fra": "departure station full name", "til": "destination station full name", "dato": "DD.MM.YYYY", "tidspunkt": "HH:MM", "operatoer": "railway company name (e.g. DSB, DB, SNCF, Eurostar, NS, OBB, Trenitalia, Renfe)", "billetpris": 549, "valuta": "DKK", "bekreeftet": true } If you cannot find a field, set it to null.` }] }]
+          messages: [{ role: "user", content: [contentBlock, { type: "text", text: `You are a ticket reader. Analyze this train ticket carefully and return ONLY valid JSON without markdown or explanation: { "fra": "departure station full name", "til": "destination station full name", "dato": "DD.MM.YYYY", "tidspunkt": "HH:MM", "operatoer": "railway company name (e.g. DSB, DB, SNCF, Eurostar, NS, OBB, Trenitalia, Renfe)", "billetpris": 549, "valuta": "DKK", "bookingRef": "ticket/booking reference if visible", "bekreeftet": true } If you cannot find a field, set it to null.` }] }]
         })
       });
       const data = await response.json();
@@ -199,7 +199,7 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
 
       <button onClick={analyze} disabled={!file || loading}
         style={{ marginTop: 24, width: "100%", padding: "16px", background: file && !loading ? "#C8A96E" : "#1a1a2e", color: file && !loading ? "#0a0a1a" : "#3a3a5a", border: "none", borderRadius: 8, cursor: file && !loading ? "pointer" : "not-allowed", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, letterSpacing: "0.05em", transition: "all 0.2s ease" }}>
-        {loading ? "⟳ Analysing ticket..." : "Analyse ticket →"}
+        {loading ? "Analysing ticket…" : "Analyse ticket →"}
       </button>
 
       <button onClick={skipToManual}
@@ -292,6 +292,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   else if (delayMinutes >= 120) { rate = 1.0; eligible = true; }
   else if (delayMinutes >= 60) { rate = op.rate; eligible = true; }
   const compensation = price * rate;
+  const formulaText = delayMinutes >= 120 ? "100% of ticket price (delay ≥120 min)" : "50% of ticket price (delay 60–119 min)";
   const ourFee = compensation * 0.25;
   const youGet = compensation - ourFee;
   const currency = extractedInfo?.valuta || "DKK";
@@ -306,14 +307,14 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
       <div style={{ background: eligible ? "rgba(76,175,122,0.08)" : "rgba(255,107,107,0.08)", border: `1px solid ${eligible ? "rgba(76,175,122,0.3)" : "rgba(255,107,107,0.3)"}`, borderRadius: 12, padding: 24, marginBottom: 24 }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "✅" : "❌"}</div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#4CAF7A" : "#ff6b6b", marginBottom: 4 }}>{eligible ? "You are eligible for compensation" : "Not eligible"}</div>
-        {!eligible && <div style={{ color: "#6a6a8a", fontSize: 13, fontFamily: "'DM Mono', monospace" }}>{reason}</div>}
+        {!eligible && <div style={{ color: "#6a6a8a", fontSize: 13, fontFamily: "'DM Mono', monospace", lineHeight: 1.7 }}>{reason}<br/><span style={{fontSize:11,color:"#4a4a6a"}}>Note: Some operators offer voluntary schemes below the legal threshold — check their website.</span></div>}
       </div>
       {eligible && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
             {[{label:"Total compensation",value:`${compensation.toFixed(0)} ${currency}`,accent:false},{label:"Our fee (25%)",value:`${ourFee.toFixed(0)} ${currency}`,accent:false},{label:"You receive",value:`${youGet.toFixed(0)} ${currency}`,accent:true}].map(({label,value,accent}) => (
               <div key={label} style={{ background: accent ? "rgba(200,169,110,0.1)" : "#111128", border: `1px solid ${accent ? "rgba(200,169,110,0.4)" : "#2d2d4e"}`, borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
-                <div style={{ color: "#4a4a6a", fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
+                <div style={{ color: "#4a4a6a", fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}{label==="Total compensation" && <span style={{display:"block",fontSize:9,color:"#3a3a5a",marginTop:2}}>{formulaText}</span>}</div>
                 <div style={{ color: accent ? "#C8A96E" : "#e8e0d0", fontSize: 18, fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>{value}</div>
               </div>
             ))}
@@ -322,6 +323,10 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
             <div style={{ color: "#6a6a8a", fontSize: 11, fontFamily: "'DM Mono', monospace", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>Complaints authority</div>
             <div style={{ color: "#e8e0d0", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>{op?.authority}</div>
             <div style={{ color: "#C8A96E", fontSize: 12, marginTop: 4, fontFamily: "'DM Mono', monospace" }}>{op?.authorityUrl}</div>
+          <div style={{ marginTop:10, paddingTop:10, borderTop:"1px solid #1e1e38" }}>
+            <div style={{ color:"#6a6a8a", fontSize:10, fontFamily:"'DM Mono', monospace", marginBottom:4, letterSpacing:"0.1em", textTransform:"uppercase" }}>Direct claim portal</div>
+            <a href={op?.claimUrl} target="_blank" rel="noopener noreferrer" style={{ color:"#4CAF7A", fontSize:12, fontFamily:"'DM Mono', monospace", textDecoration:"none" }}>{op?.claimUrl} ↗</a>
+          </div>
           </div>
         </>
       )}
@@ -379,6 +384,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [iban, setIban] = useState("");
+  const [swift, setSwift] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [signInput, setSignInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -393,9 +399,11 @@ function FormStep({ extractedInfo, compensation, onBack }) {
     setLoading(true); setError("");
     try {
       const payload = {
-        info: { fra: extractedInfo.fra, til: extractedInfo.til, dato: extractedInfo.dato, tidspunkt: extractedInfo.tidspunkt, forsinkelse: extractedInfo.forsinkelse, operatoer: extractedInfo.operatør || "", billetpris: extractedInfo.billetpris, valuta: extractedInfo.valuta || "DKK" },
+        info: { fra: extractedInfo.fra, til: extractedInfo.til, dato: extractedInfo.dato, tidspunkt: extractedInfo.tidspunkt, forsinkelse: extractedInfo.forsinkelse, operatoer: extractedInfo.operatør || "",
+              tog: extractedInfo.tog || "",
+              bookingRef: extractedInfo.bookingRef || "", billetpris: extractedInfo.billetpris, valuta: extractedInfo.valuta || "DKK" },
         comp: { compensation: compensation.compensation, authority: compensation.op.authority, authorityUrl: compensation.op.authorityUrl },
-        person: { navn: name, email, adresse: address, iban, dato_signed: new Date().toLocaleDateString("en-GB") }
+        person: { navn: name, email, adresse: address, iban, swift, dato_signed: new Date().toLocaleDateString("en-GB") }
       };
       const res = await fetch("/api/generate-pdfs", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error("Server error: " + res.status);
@@ -425,6 +433,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <div><Lbl>Email *</Lbl><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" type="email" style={inp} /></div>
           <div><Lbl>IBAN (for payout)</Lbl><input value={iban} onChange={e=>setIban(e.target.value)} placeholder="DK50 0040..." style={inp} /></div>
+              <div><Lbl>SWIFT/BIC (optional)</Lbl><input value={swift} onChange={e=>setSwift(e.target.value)} placeholder="DABADKKK" style={inp} /></div>
         </div>
         <div><Lbl>Address *</Lbl><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="123 Main Street, Copenhagen" style={inp} /></div>
         <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px" }}>
@@ -484,7 +493,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       <div style={{ fontSize:52, marginBottom:16 }}>🎉</div>
       <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#e8e0d0", marginBottom:10, fontWeight:400 }}>Documents downloaded!</h2>
       <p style={{ fontFamily:mono, fontSize:13, color:"#6a6a8a", marginBottom:20, lineHeight:1.8 }}>
-        2 PDF files have been downloaded. Send both to <strong style={{ color:"#C8A96E" }}>{compensation.op.authority}</strong>.
+        2 PDF files have been downloaded. Email both to <strong style={{ color:"#C8A96E" }}>{extractedInfo.operatør}</strong> — operator must reply within 1 month (EU Reg. 2021/782, Art. 29).
       </p>
       <div style={{ display:"grid", gap:10, textAlign:"left", background:"#111128", borderRadius:10, padding:18, marginBottom:20 }}>
         {[["📄 EU-claim-form-2024-949.pdf","EU Reg. 2024/949 claim form — submitted to the operator for compensation"],
