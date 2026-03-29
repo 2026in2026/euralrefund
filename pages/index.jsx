@@ -4,14 +4,14 @@ import Head from "next/head";
 const STEPS = ["upload", "details", "result", "form"];
 
 const OPERATORS = {
-  "DSB (Denmark)": { threshold: 60, rate: 0.5, authority: "Trafikstyrelsen", url: "https://www.trafikstyrelsen.dk" },
-  "DB (Germany)": { threshold: 60, rate: 0.5, authority: "Bundesnetzagentur", url: "https://www.bundesnetzagentur.de" },
-  "SNCF (France)": { threshold: 60, rate: 0.25, authority: "ARAFER", url: "https://www.autorite-transports.fr" },
-  "Eurostar": { threshold: 60, rate: 0.5, authority: "ORR (UK)", url: "https://www.orr.gov.uk" },
-  "NS (Netherlands)": { threshold: 30, rate: 0.5, authority: "ACM", url: "https://www.acm.nl" },
-  "OBB (Austria)": { threshold: 60, rate: 0.5, authority: "Schienen-Control", url: "https://www.schienen-control.gv.at" },
-  "Trenitalia (Italy)": { threshold: 60, rate: 0.25, authority: "ART", url: "https://www.autorita-trasporti.it" },
-  "Renfe (Spain)": { threshold: 60, rate: 0.5, authority: "CNMC", url: "https://www.cnmc.es" },
+  "DSB (Denmark)": { threshold: 60, rate: 0.5, authority: "Trafikstyrelsen", authorityUrl: "https://www.trafikstyrelsen.dk", claimEmail: "kundeservice@dsb.dk", claimUrl: "https://www.dsb.dk/kundeservice/kontakt/" },
+  "DB (Germany)": { threshold: 60, rate: 0.5, authority: "Bundesnetzagentur", authorityUrl: "https://www.bundesnetzagentur.de", claimEmail: "fahrgastrechte@bahn.de", claimUrl: "https://int.bahn.de/en/buchung/meine-reisen" },
+  "SNCF (France)": { threshold: 60, rate: 0.25, authority: "ARAFER", authorityUrl: "https://www.autorite-transports.fr", claimEmail: "client@sncf.fr", claimUrl: "https://www.sncf-connect.com/en-en/help/delays" },
+  "Eurostar": { threshold: 60, rate: 0.5, authority: "ORR (UK)", authorityUrl: "https://www.orr.gov.uk", claimEmail: "claims@eurostar.com", claimUrl: "https://www.eurostar.com/uk-en/customer-service/delays-and-disruptions" },
+  "NS (Netherlands)": { threshold: 30, rate: 0.5, authority: "ACM", authorityUrl: "https://www.acm.nl", claimEmail: "klantenservice@ns.nl", claimUrl: "https://www.ns.nl/klantenservice/compensatie-en-schadeclaims" },
+  "OBB (Austria)": { threshold: 60, rate: 0.5, authority: "Schienen-Control", authorityUrl: "https://www.schienen-control.gv.at", claimEmail: "kundenservice@oebb.at", claimUrl: "https://www.oebb.at/en/service/contact" },
+  "Trenitalia (Italy)": { threshold: 60, rate: 0.25, authority: "ART", authorityUrl: "https://www.autorita-trasporti.it", claimEmail: "assistenza@trenitalia.it", claimUrl: "https://www.trenitalia.com/en/services/customer-care.html" },
+  "Renfe (Spain)": { threshold: 60, rate: 0.5, authority: "CNMC", authorityUrl: "https://www.cnmc.es", claimEmail: "atencion.cliente@renfe.es", claimUrl: "https://www.renfe.com/es/en/travelling-with-renfe/customer-service" },
 };
 
 const DELAY_OPTIONS = ["30-59 min", "60-119 min", "120+ min"];
@@ -321,7 +321,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
           <div style={{ background: "#111128", border: "1px solid #2d2d4e", borderRadius: 10, padding: 16, marginBottom: 24 }}>
             <div style={{ color: "#6a6a8a", fontSize: 11, fontFamily: "'DM Mono', monospace", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>Complaints authority</div>
             <div style={{ color: "#e8e0d0", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>{op?.authority}</div>
-            <div style={{ color: "#C8A96E", fontSize: 12, marginTop: 4, fontFamily: "'DM Mono', monospace" }}>{op?.url}</div>
+            <div style={{ color: "#C8A96E", fontSize: 12, marginTop: 4, fontFamily: "'DM Mono', monospace" }}>{op?.authorityUrl}</div>
           </div>
         </>
       )}
@@ -394,7 +394,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
     try {
       const payload = {
         info: { fra: extractedInfo.fra, til: extractedInfo.til, dato: extractedInfo.dato, tidspunkt: extractedInfo.tidspunkt, forsinkelse: extractedInfo.forsinkelse, operatoer: extractedInfo.operatør || "", billetpris: extractedInfo.billetpris, valuta: extractedInfo.valuta || "DKK" },
-        comp: { compensation: compensation.compensation, authority: compensation.op.authority, url: compensation.op.url },
+        comp: { compensation: compensation.compensation, authority: compensation.op.authority, authorityUrl: compensation.op.authorityUrl },
         person: { navn: name, email, adresse: address, iban, dato_signed: new Date().toLocaleDateString("en-GB") }
       };
       const res = await fetch("/api/generate-pdfs", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) });
@@ -430,8 +430,8 @@ function FormStep({ extractedInfo, compensation, onBack }) {
         <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px" }}>
           <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10, letterSpacing:"0.08em" }}>WE GENERATE 2 DOCUMENTS</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-            <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}><div style={{ fontSize:20, marginBottom:4 }}>📄</div><div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>EU Form 2024/949</div><div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Official EU form, auto-filled</div></div>
-            <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}><div style={{ fontSize:20, marginBottom:4 }}>✍️</div><div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>Power of Attorney</div><div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Authorises us to submit</div></div>
+            <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}><div style={{ fontSize:20, marginBottom:4 }}>📄</div><div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>EU Form 2024/949</div><div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Legally binding claim — sent directly to operator</div></div>
+            <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}><div style={{ fontSize:20, marginBottom:4 }}>✍️</div><div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>Power of Attorney</div><div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Authorises EU Rail Refund to act for you</div></div>
           </div>
         </div>
         <div onClick={() => setAgreed(a=>!a)} style={{ display:"flex", gap:10, cursor:"pointer", alignItems:"flex-start", padding:"12px", background: agreed ? "rgba(76,175,122,0.07)" : "#111128", border:`1px solid ${agreed ? "rgba(76,175,122,0.4)" : "#2d2d4e"}`, borderRadius:8, transition:"all 0.2s" }}>
@@ -487,7 +487,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
         2 PDF files have been downloaded. Send both to <strong style={{ color:"#C8A96E" }}>{compensation.op.authority}</strong>.
       </p>
       <div style={{ display:"grid", gap:10, textAlign:"left", background:"#111128", borderRadius:10, padding:18, marginBottom:20 }}>
-        {[["📄 EU-claim-form-2024-949.pdf","Official EU 2024/949 form — send to the operator"],
+        {[["📄 EU-claim-form-2024-949.pdf","EU Reg. 2024/949 claim form — submitted to the operator for compensation"],
           ["✍️ Power-of-Attorney-EU-Rail-Refund.pdf","Power of attorney — attach to the complaint"]
         ].map(([file,desc]) => (
           <div key={file}><div style={{ fontFamily:mono, fontSize:12, color:"#e8e0d0" }}>{file}</div><div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:2 }}>{desc}</div></div>
@@ -496,10 +496,10 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left", marginBottom: 0 }}>
         <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10 }}>NEXT STEPS</div>
         <div style={{ fontFamily:mono, fontSize:12, color:"#8a8aaa", lineHeight:2 }}>
-          1. Email both PDFs to {extractedInfo.operatør}<br/>
-          2. CC: {compensation.op.authority} ({compensation.op.url})<br/>
-          3. Operator has 30 days to respond (Reg. EU 2021/782)<br/>
-          4. We will follow up automatically if no reply
+          1. We email EU form 2024/949 + PoA to {extractedInfo.operatør}<br/>
+          2. Operator must reply within 1 month (EU Reg. 2021/782, Art. 29)<br/>
+          3. If rejected or no reply → we escalate to {compensation.op.authority}<br/>
+          4. We handle all follow-up on your behalf
         </div>
       </div>
       <FeedbackBox />
