@@ -300,7 +300,7 @@ async function buildFuldmagt(info, comp, person) {
   const items = [
     'To submit and sign the official EU form (Reg. EU 2024/949) to ' + (info.operatoer||'') + ' on behalf of the grantor.',
     'To correspond with the railway operator and national enforcement bodies, including ' + (comp.authority||'') + '.',
-    'To receive the compensation amount and pay the grantor's share (75%) within 5 business days.',
+    'To receive the compensation amount and pay the grantor\u2019s share (75%) within 5 business days.',
     'To escalate to ' + (comp.authority||'') + ' if the operator does not reply within 30 days (EU Reg. 2021/782, Art. 29).',
   ];
   for (let i = 0; i < items.length; i++) {
