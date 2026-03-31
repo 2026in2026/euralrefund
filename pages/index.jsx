@@ -262,6 +262,15 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
         </div>
         <div>
           <label style={{ display: "block", color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 8, letterSpacing: "0.12em", textTransform: "uppercase" }}>What was the delay? <span style={{ color: "#CC4444" }}>*</span></label>
+          <div style={{ background: "rgba(200,169,110,0.07)", border: "1px solid rgba(200,169,110,0.2)", borderRadius: 8, padding: "10px 14px", marginBottom: 10, fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#8a8aaa", lineHeight: 1.8 }}>
+            <div style={{ color: "#C8A96E", fontWeight: 700, marginBottom: 4 }}>How delay is measured:</div>
+            <div>Count from your scheduled arrival time to when you actually arrived at your final destination.</div>
+            <div style={{ marginTop: 6, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+              <div style={{ background: "#111128", borderRadius: 6, padding: "6px 8px", textAlign: "center" }}><div style={{ color: "#e8e0d0", fontWeight: 700 }}>30–59 min</div><div style={{ color: "#6a6a8a", fontSize: 10 }}>qualifies (50% refund)</div></div>
+              <div style={{ background: "#111128", borderRadius: 6, padding: "6px 8px", textAlign: "center" }}><div style={{ color: "#e8e0d0", fontWeight: 700 }}>60–119 min</div><div style={{ color: "#6a6a8a", fontSize: 10 }}>qualifies (50% refund)</div></div>
+              <div style={{ background: "#111128", borderRadius: 6, padding: "6px 8px", textAlign: "center" }}><div style={{ color: "#C8A96E", fontWeight: 700 }}>120+ min</div><div style={{ color: "#6a6a8a", fontSize: 10 }}>qualifies (50% refund)</div></div>
+            </div>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {DELAY_OPTIONS.map(d => (
               <button key={d} onClick={() => update("forsinkelse", d)}
@@ -306,29 +315,30 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: 400 }}>Assessment</h2>
       <div style={{ background: eligible ? "rgba(76,175,122,0.08)" : "rgba(255,107,107,0.08)", border: `1px solid ${eligible ? "rgba(76,175,122,0.3)" : "rgba(255,107,107,0.3)"}`, borderRadius: 12, padding: 24, marginBottom: 24 }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "✅" : "❌"}</div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#4CAF7A" : "#ff6b6b", marginBottom: 4 }}>{eligible ? "You are eligible for compensation" : "Not eligible"}</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#4CAF7A" : "#ff6b6b", marginBottom: 4 }}>{eligible ? "Based on the information provided, your journey may be eligible for compensation" : "Not eligible — delay below threshold"}</div>
         {!eligible && <div style={{ color: "#6a6a8a", fontSize: 13, fontFamily: "'DM Mono', monospace", lineHeight: 1.7 }}>{reason}<br/><span style={{fontSize:11,color:"#4a4a6a"}}>Note: Some operators offer voluntary schemes below the legal threshold — check their website.</span></div>}
       </div>
       {eligible && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
-            {[{label:"Total compensation",value:`${compensation.toFixed(0)} ${currency}`,accent:false},{label:"Our fee (25%)",value:`${ourFee.toFixed(0)} ${currency}`,accent:false},{label:"You receive",value:`${youGet.toFixed(0)} ${currency}`,accent:true}].map(({label,value,accent}) => (
+            {[{label:"Potential claim value",value:`${compensation.toFixed(0)} ${currency}`,accent:false},{label:"Our fee (25%)",value:`${ourFee.toFixed(0)} ${currency}`,accent:false},{label:"You could receive",value:`${youGet.toFixed(0)} ${currency}`,accent:true}].map(({label,value,accent}) => (
               <div key={label} style={{ background: accent ? "rgba(200,169,110,0.1)" : "#111128", border: `1px solid ${accent ? "rgba(200,169,110,0.4)" : "#2d2d4e"}`, borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
                 <div style={{ color: "#4a4a6a", fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}{label==="Total compensation" && <span style={{display:"block",fontSize:9,color:"#3a3a5a",marginTop:2}}>{formulaText}</span>}</div>
                 <div style={{ color: accent ? "#C8A96E" : "#e8e0d0", fontSize: 18, fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>{value}</div>
               </div>
             ))}
           </div>
-          <div style={{ background: "#111128", border: "1px solid #2d2d4e", borderRadius: 10, padding: 16, marginBottom: 24 }}>
-            <div style={{ color: "#6a6a8a", fontSize: 11, fontFamily: "'DM Mono', monospace", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>Complaints authority</div>
-            <div style={{ color: "#e8e0d0", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>{op?.authority}</div>
-            <div style={{ color: "#C8A96E", fontSize: 12, marginTop: 4, fontFamily: "'DM Mono', monospace" }}>{op?.authorityUrl}</div>
-          <div style={{ marginTop:10, paddingTop:10, borderTop:"1px solid #1e1e38" }}>
-            <div style={{ color:"#6a6a8a", fontSize:10, fontFamily:"'DM Mono', monospace", marginBottom:4, letterSpacing:"0.1em", textTransform:"uppercase" }}>Direct claim portal</div>
-            <a href={op?.claimUrl} target="_blank" rel="noopener noreferrer" style={{ color:"#4CAF7A", fontSize:12, fontFamily:"'DM Mono', monospace", textDecoration:"none" }}>{op?.claimUrl} ↗</a>
-          </div>
-          </div>
         </>
+      )}
+      {eligible && (
+        <div style={{ background: "rgba(200,169,110,0.08)", border: "1px solid rgba(200,169,110,0.25)", borderRadius: 10, padding: "14px 16px", marginBottom: 16, fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#8a8aaa", lineHeight: 2 }}>
+          <div style={{ color: "#C8A96E", fontWeight: 700, marginBottom: 6, fontSize: 13 }}>📄 If you proceed, we handle everything on your behalf:</div>
+          <div>1. We prepare and file your claim with the operator on your behalf.</div>
+          <div>2. We handle all correspondence — you don't need to do anything.</div>
+          <div>3. If approved, we transfer 75% of the compensation to your IBAN.</div>
+          <div>4. If rejected or no reply, we escalate at no extra cost to you.</div>
+          <div style={{ marginTop: 4, color: "#4a4a6a", fontSize: 11 }}>You will not need to contact the operator yourself.</div>
+        </div>
       )}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
         <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #2d2d4e", borderRadius: 8, color: "#6a6a8a", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>← Back</button>
@@ -385,6 +395,8 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   const [address, setAddress] = useState("");
   const [iban, setIban] = useState("");
   const [swift, setSwift] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [showIbanTip, setShowIbanTip] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [signInput, setSignInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -392,7 +404,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   const mono = "'DM Mono', monospace";
   const inp = { width:"100%", padding:"11px 13px", background:"#111128", border:"1px solid #2d2d4e", borderRadius:8, color:"#e8e0d0", fontFamily:mono, fontSize:13, outline:"none", boxSizing:"border-box" };
   const signed = signInput.trim().toLowerCase() === name.trim().toLowerCase() && name.trim().length > 0;
-  const canGo = name.trim() && email.trim() && address.trim() && agreed;
+  const canGo = name.trim() && email.trim() && address.trim() && agreed && confirmEmail === email && confirmEmail.trim().length > 0;
   const Lbl = ({children}) => <label style={{ display:"block", color:"#6a6a8a", fontSize:10, fontFamily:mono, marginBottom:5, letterSpacing:"0.1em", textTransform:"uppercase" }}>{children}</label>;
 
   const doGenerate = async () => {
@@ -429,10 +441,47 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#e8e0d0", marginBottom:6, fontWeight:400 }}>Your information</h2>
       <p style={{ color:"#6a6a8a", fontSize:13, marginBottom:22, fontFamily:mono }}>Used to fill in the official EU form (2024/949)</p>
       <div style={{ display:"grid", gap:14 }}>
+        <div style={{ background:"rgba(200,169,110,0.12)", border:"2px solid #C8A96E", borderRadius:12, padding:"16px 18px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+            <span style={{ fontSize:20 }}>💰</span>
+            <div style={{ fontFamily:mono, fontSize:14, color:"#C8A96E", fontWeight:700 }}>We take 25% — nothing to pay if we don't win</div>
+          </div>
+          <div style={{ fontFamily:mono, fontSize:11, color:"#6a6a8a", marginBottom:6, letterSpacing:"0.08em", textTransform:"uppercase" }}>How payment works:</div>
+          <div style={{ fontFamily:mono, fontSize:12, color:"#8a8aaa", lineHeight:2 }}>
+            <div>1. We file your claim with the operator on your behalf.</div>
+            <div>2. If approved, the operator pays us the compensation.</div>
+            <div>3. We deduct our 25% fee and wire the remaining 75% to your IBAN.</div>
+            <div>4. If the claim is rejected, you pay nothing — we take all the risk.</div>
+          </div>
+        </div>
         <div><Lbl>Full name *</Lbl><input value={name} onChange={e=>setName(e.target.value)} placeholder="John Smith" style={inp} /></div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <div><Lbl>Email *</Lbl><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" type="email" style={inp} /></div>
-          <div><Lbl>IBAN (for payout)</Lbl><input value={iban} onChange={e=>setIban(e.target.value)} placeholder="DK50 0040..." style={inp} /></div>
+          <div>
+            <Lbl>Email *</Lbl>
+            <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" type="email" style={inp} />
+          </div>
+          <div>
+            <Lbl>Confirm email *</Lbl>
+            <input value={confirmEmail} onChange={e=>setConfirmEmail(e.target.value)} placeholder="your@email.com" type="email" style={{...inp, border: confirmEmail && confirmEmail!==email ? "1px solid #CC4444" : confirmEmail && confirmEmail===email ? "1px solid #4CAF7A" : inp.border}} />
+            {confirmEmail && confirmEmail!==email && <div style={{color:"#CC4444",fontSize:11,fontFamily:mono,marginTop:4}}>⚠️ Emails do not match</div>}
+            {confirmEmail && confirmEmail===email && <div style={{color:"#4CAF7A",fontSize:11,fontFamily:mono,marginTop:4}}>✓ Emails match</div>}
+          </div>
+          <div style={{position:"relative"}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+              <Lbl>IBAN (for payout)</Lbl>
+              <span onMouseEnter={()=>setShowIbanTip(true)} onMouseLeave={()=>setShowIbanTip(false)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"50%",background:"#2d2d4e",color:"#8a8aaa",fontSize:10,cursor:"help",userSelect:"none",flexShrink:0,marginBottom:5,position:"relative"}}>?
+                {showIbanTip && <div style={{position:"absolute",bottom:"100%",left:0,zIndex:99,background:"#1e1e38",border:"1px solid #3d3d5e",borderRadius:8,padding:"12px 14px",width:260,fontFamily:mono,fontSize:11,color:"#c8c8e8",lineHeight:1.8,marginBottom:8,boxShadow:"0 4px 16px rgba(0,0,0,0.5)"}}>
+                  <div style={{color:"#C8A96E",fontWeight:700,marginBottom:4}}>What is an IBAN?</div>
+                  <div>IBAN stands for International Bank Account Number. It is used to identify a bank account internationally.</div>
+                  <div style={{marginTop:6}}>Example: DK50 0040 0440 1162 43</div>
+                  <div style={{marginTop:4,color:"#6a6a8a"}}>Find it in your banking app or on your bank statement.</div>
+                </div>}
+              </span>
+            </div>
+            <input value={iban} onChange={e=>setIban(e.target.value)} placeholder="DK50 0040..." style={{...inp, border: iban && (iban.replace(/[\s-]/g,"").length<15||iban.replace(/[\s-]/g,"").length>34) ? "1px solid #CC4444" : iban && iban.replace(/[\s-]/g,"").length>=15&&iban.replace(/[\s-]/g,"").length<=34 ? "1px solid #4CAF7A" : inp.border}} />
+            {iban && (iban.replace(/[\s-]/g,"").length<15||iban.replace(/[\s-]/g,"").length>34) && <div style={{color:"#CC4444",fontSize:11,fontFamily:mono,marginTop:4}}>⚠️ Invalid IBAN — should be 15–34 characters</div>}
+            {iban && iban.replace(/[\s-]/g,"").length>=15 && iban.replace(/[\s-]/g,"").length<=34 && <div style={{color:"#4CAF7A",fontSize:11,fontFamily:mono,marginTop:4}}>✓ IBAN looks good</div>}
+          </div>
               <div><Lbl>SWIFT/BIC (optional)</Lbl><input value={swift} onChange={e=>setSwift(e.target.value)} placeholder="DABADKKK" style={inp} /></div>
         </div>
         <div><Lbl>Address *</Lbl><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="123 Main Street, Copenhagen" style={inp} /></div>
@@ -502,13 +551,13 @@ function FormStep({ extractedInfo, compensation, onBack }) {
           <div key={file}><div style={{ fontFamily:mono, fontSize:12, color:"#e8e0d0" }}>{file}</div><div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:2 }}>{desc}</div></div>
         ))}
       </div>
-      <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left", marginBottom: 0 }}>
-        <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10 }}>NEXT STEPS</div>
-        <div style={{ fontFamily:mono, fontSize:12, color:"#8a8aaa", lineHeight:2 }}>
-          1. We email EU form 2024/949 + PoA to {extractedInfo.operatør}<br/>
-          2. Operator must reply within 1 month (EU Reg. 2021/782, Art. 29)<br/>
-          3. If rejected or no reply → we escalate to {compensation.op.authority}<br/>
-          4. We handle all follow-up on your behalf
+      <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left" }}>
+        <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10, letterSpacing:"0.1em", textTransform:"uppercase" }}>What happens next — we handle everything</div>
+        <div style={{ fontFamily:mono, fontSize:12, color:"#8a8aaa", lineHeight:1.6 }}>
+          <div style={{ display:"flex", gap:8, marginBottom:10 }}><div style={{ color:"#C8A96E", fontWeight:700, minWidth:16 }}>1.</div><div><div style={{ color:"#e8e0d0", fontWeight:600 }}>We send your claim to the operator</div><div>We file EU form 2024/949 + Power of Attorney with {extractedInfo.operatør}.</div><div style={{ color:"#4a4a6a", fontSize:11, marginTop:2 }}>Timeline: within 24–48 hrs of submission.</div></div></div>
+          <div style={{ display:"flex", gap:8, marginBottom:10 }}><div style={{ color:"#C8A96E", fontWeight:700, minWidth:16 }}>2.</div><div><div style={{ color:"#e8e0d0", fontWeight:600 }}>Operator reviews your claim</div><div>Under EU Reg. 2021/782, operator must respond within 1 month. We monitor this for you.</div><div style={{ color:"#4a4a6a", fontSize:11, marginTop:2 }}>Timeline: typically 2–6 weeks.</div></div></div>
+          <div style={{ display:"flex", gap:8, marginBottom:10 }}><div style={{ color:"#C8A96E", fontWeight:700, minWidth:16 }}>3.</div><div><div style={{ color:"#e8e0d0", fontWeight:600 }}>We escalate if needed</div><div>If rejected or no reply, we escalate to {compensation.op.authority} at no extra cost.</div><div style={{ color:"#4a4a6a", fontSize:11, marginTop:2 }}>Timeline: 1–3 months for escalations.</div></div></div>
+          <div style={{ display:"flex", gap:8 }}><div style={{ color:"#C8A96E", fontWeight:700, minWidth:16 }}>4.</div><div><div style={{ color:"#e8e0d0", fontWeight:600 }}>You receive your payout</div><div>We wire 75% of the approved compensation to your IBAN. Our fee is deducted only upon success.</div><div style={{ color:"#4a4a6a", fontSize:11, marginTop:2 }}>Overall: most claims resolve in 1–3 months.</div></div></div>
         </div>
       </div>
       <FeedbackBox />
@@ -546,7 +595,7 @@ export default function App() {
           {step==="result" && <ResultStep extractedInfo={extractedInfo} onNext={()=>goTo("form")} onBack={()=>goTo("details")} setCompensation={setCompensation} />}
           {step==="form" && <FormStep extractedInfo={extractedInfo} compensation={compensation} onBack={()=>goTo("result")} />}
         </div>
-        <p style={{ textAlign:"center", color:"#2a2a3a", fontSize:11, fontFamily:"'DM Mono', monospace", marginTop:20 }}>We take 25% of the compensation — nothing to pay if we don't win</p>
+        <div style={{ textAlign:"center", marginTop:20, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}><span style={{ fontSize:14 }}>💰</span><p style={{ margin:0, fontFamily:"'DM Mono', monospace", fontSize:12, color:"#C8A96E", fontWeight:700 }}>We take 25% of the compensation — nothing to pay if we don't win</p></div>
       </div>
       <Head>
         <title>EU Rail Refund — Get your money back</title>
