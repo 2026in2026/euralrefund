@@ -52,7 +52,7 @@ function validateIBAN(raw) {
     const digit = code >= 65 ? BigInt(code - 55) : BigInt(code - 48);
     remainder = (remainder * (digit >= 10n ? 100n : 10n) + digit) % 97n;
   }
-  if (remainder !== 1n) return { valid: false, error: "Invalid checksum — please double-check the number", country: COUNTRY_NAMES[cc]||cc, suggestedBic: "" };
+  if (remainder !== 1n) return { valid: false, error: "Invalid checksum  please double-check the number", country: COUNTRY_NAMES[cc]||cc, suggestedBic: "" };
   return { valid: true, country: COUNTRY_NAMES[cc] || cc, suggestedBic: COUNTRY_BIC[cc] || "" };
 }
 // ---
@@ -65,7 +65,7 @@ const OPERATORS = {
   "SNCF (Frankrig)": { threshold: 60, rate: 0.25, authority: "ARAFER", url: "https://www.autorite-transports.fr" },
   "Eurostar": { threshold: 60, rate: 0.5, authority: "ORR (UK)", url: "https://www.orr.gov.uk" },
   "NS (Holland)": { threshold: 30, rate: 0.5, authority: "ACM", url: "https://www.acm.nl" },
-  "ÃBB (Ãstrig)": { threshold: 60, rate: 0.5, authority: "Schienen-Control", url: "https://www.schienen-control.gv.at" },
+  "ÖBB (Østrig)": { threshold: 60, rate: 0.5, authority: "Schienen-Control", url: "https://www.schienen-control.gv.at" },
   "Trenitalia (Italien)": { threshold: 60, rate: 0.25, authority: "ART", url: "https://www.autorita-trasporti.it" },
   "Renfe (Spanien)": { threshold: 60, rate: 0.5, authority: "CNMC", url: "https://www.cnmc.es" },
 };
@@ -82,9 +82,9 @@ const OPERATOR_ALIASES = {
   "eurostar": "Eurostar",
   "ns": "NS (Holland)",
   "nederlandse spoorwegen": "NS (Holland)",
-  "Ã¶bb": "ÃBB (Ãstrig)",
-  "obb": "ÃBB (Ãstrig)",
-  "Ã¶sterreichische bundesbahnen": "ÃBB (Ãstrig)",
+  "öbb": "ÖBB (Østrig)",
+  "obb": "ÖBB (Østrig)",
+  "österreichische bundesbahnen": "ÖBB (Østrig)",
   "trenitalia": "Trenitalia (Italien)",
   "renfe": "Renfe (Spanien)",
 };
@@ -119,7 +119,7 @@ function ProgressBar({ step }) {
               color: active ? "#0a0a1a" : "#4a4a6a",
               fontWeight: 700, flexShrink: 0, transition: "all 0.3s ease"
             }}>
-              {i < STEPS.indexOf(step) ? "â" : i + 1}
+              {i < STEPS.indexOf(step) ? "✓" : i + 1}
             </div>
             <span style={{ fontSize: 11, color: active ? "#C8A96E" : "#3a3a5a", marginLeft: 6, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>{s}</span>
             {i < steps.length - 1 && (
@@ -174,18 +174,18 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
               contentBlock,
               {
                 type: "text",
-                text: `Du er en billetlÃ¦ser. Analyser denne togbillet omhyggeligt og returner KUN gyldig JSON uden markdown eller forklaring:
+                text: `Du er en billetlæser. Analyser denne togbillet omhyggeligt og returner KUN gyldig JSON uden markdown eller forklaring:
 {
   "fra": "afgangsstation fulde navn",
   "til": "destinationsstation fulde navn",
   "dato": "DD.MM.YYYY",
   "tidspunkt": "HH:MM",
-  "operatør": "jernbaneselskabets navn (f.eks. DSB, DB, SNCF, Eurostar, NS, ÃBB, Trenitalia, Renfe)",
+  "operat�r": "jernbaneselskabets navn (f.eks. DSB, DB, SNCF, Eurostar, NS, ÖBB, Trenitalia, Renfe)",
   "billetpris": 549,
   "valuta": "DKK",
-  "bekrÃ¦ftet": true
+  "bekræftet": true
 }
-Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet: true hvis du kan lÃ¦se billetten.`
+Hvis du ikke kan finde et felt, sæt det til null. Returner altid bekræftet: true hvis du kan læse billetten.`
               }
             ]
           }]
@@ -198,14 +198,14 @@ Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet
       const parsed = JSON.parse(clean);
 
       // Normalize operator name to match our dropdown
-      const normalizedOp = normalizeOperator(parsed.operatør || "");
-      const enriched = { ...parsed, operatør: normalizedOp };
+      const normalizedOp = normalizeOperator(parsed.operat�r || "");
+      const enriched = { ...parsed, operat�r: normalizedOp };
 
       setTicketData({ file, base64, mediaType });
       setExtractedInfo(enriched);
       onNext();
     } catch (e) {
-      setError("Kunne ikke lÃ¦se billetten. Prøv et klarere billede.");
+      setError("Kunne ikke læse billetten. Pr�v et klarere billede.");
     } finally {
       setLoading(false);
     }
@@ -217,7 +217,7 @@ Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet
         Upload din billet
       </h2>
       <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 28, fontFamily: "'DM Mono', monospace" }}>
-        PDF eller billede â vi lÃ¦ser detaljerne automatisk
+        PDF eller billede — vi læser detaljerne automatisk
       </p>
 
       <div
@@ -234,7 +234,7 @@ Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet
         }}
       >
         <input ref={fileRef} type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
-        <div style={{ fontSize: 36, marginBottom: 12 }}>{file ? "ð«" : "ð"}</div>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>{file ? "🎫" : "📄"}</div>
         {file ? (
           <div>
             <div style={{ color: "#4CAF7A", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700 }}>{file.name}</div>
@@ -242,8 +242,8 @@ Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet
           </div>
         ) : (
           <div>
-            <div style={{ color: "#8a8aaa", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>TrÃ¦k fil hertil eller klik for at vÃ¦lge</div>
-            <div style={{ color: "#4a4a6a", fontSize: 12, marginTop: 6 }}>Understøtter PDF, JPG, PNG</div>
+            <div style={{ color: "#8a8aaa", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>Træk fil hertil eller klik for at vælge</div>
+            <div style={{ color: "#4a4a6a", fontSize: 12, marginTop: 6 }}>Underst�tter PDF, JPG, PNG</div>
           </div>
         )}
       </div>
@@ -262,7 +262,7 @@ Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet
           letterSpacing: "0.05em", transition: "all 0.2s ease"
         }}
       >
-        {loading ? "â³  Analyserer billet..." : "AnalysÃ©r billet â"}
+        {loading ? "⟳  Analyserer billet..." : "Analysér billet →"}
       </button>
     </div>
   );
@@ -283,25 +283,25 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
     boxSizing: "border-box", transition: "border-color 0.2s"
   });
 
-  const autoCount = ["fra","til","dato","tidspunkt","operatør","billetpris"].filter(k => autoFilled(k)).length;
-  const canProceed = extractedInfo?.fra && extractedInfo?.til && extractedInfo?.operatør && extractedInfo?.forsinkelse && extractedInfo?.billetpris;
+  const autoCount = ["fra","til","dato","tidspunkt","operat�r","billetpris"].filter(k => autoFilled(k)).length;
+  const canProceed = extractedInfo?.fra && extractedInfo?.til && extractedInfo?.operat�r && extractedInfo?.forsinkelse && extractedInfo?.billetpris;
 
   return (
     <div>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: 400 }}>
-        BekrÃ¦ft rejsedetaljer
+        Bekræft rejsedetaljer
       </h2>
 
       {autoCount > 0 ? (
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(76,175,122,0.08)", border: "1px solid rgba(76,175,122,0.25)", borderRadius: 8, padding: "10px 14px", marginBottom: 24 }}>
-          <span style={{ fontSize: 18 }}>â</span>
+          <span style={{ fontSize: 18 }}>✅</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#4CAF7A" }}>
-            Vi lÃ¦ste <strong>{autoCount} felter</strong> automatisk fra din billet â tjek og ret hvis nødvendigt
+            Vi læste <strong>{autoCount} felter</strong> automatisk fra din billet — tjek og ret hvis n�dvendigt
           </span>
         </div>
       ) : (
         <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 24, fontFamily: "'DM Mono', monospace" }}>
-          Vi kunne ikke lÃ¦se billetten â udfyld manuelt
+          Vi kunne ikke læse billetten — udfyld manuelt
         </p>
       )}
 
@@ -332,14 +332,14 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
           ))}
         </div>
 
-        {/* Operatør */}
+        {/* Operat�r */}
         <div>
           <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-            Jernbaneoperatør
-            {autoFilled("operatør") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
+            Jernbaneoperat�r
+            {autoFilled("operat�r") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
           </label>
-          <select value={extractedInfo?.operatør || ""} onChange={e => update("operatør", e.target.value)} style={{ ...fieldStyle("operatør"), color: extractedInfo?.operatør ? "#e8e0d0" : "#4a4a6a" }}>
-            <option value="">VÃ¦lg operatør...</option>
+          <select value={extractedInfo?.operat�r || ""} onChange={e => update("operat�r", e.target.value)} style={{ ...fieldStyle("operat�r"), color: extractedInfo?.operat�r ? "#e8e0d0" : "#4a4a6a" }}>
+            <option value="">Vælg operat�r...</option>
             {operators.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
         </div>
@@ -383,7 +383,7 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 24 }}>
         <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #2d2d4e", borderRadius: 8, color: "#6a6a8a", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
-          â Tilbage
+          ← Tilbage
         </button>
         <button onClick={onNext} disabled={!canProceed} style={{
           padding: "14px", background: canProceed ? "#C8A96E" : "#1a1a2e",
@@ -391,7 +391,7 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
           cursor: canProceed ? "pointer" : "not-allowed",
           fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, transition: "all 0.2s ease"
         }}>
-          Beregn kompensation â
+          Beregn kompensation →
         </button>
       </div>
     </div>
@@ -399,7 +399,7 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
 }
 
 function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
-  const op = OPERATORS[extractedInfo?.operatør];
+  const op = OPERATORS[extractedInfo?.operat�r];
   const delayMap = { "30-59 min": 45, "60-119 min": 90, "120+ min": 150 };
   const delayMinutes = delayMap[extractedInfo?.forsinkelse] || 0;
   const price = parseFloat(extractedInfo?.billetpris) || 0;
@@ -409,9 +409,9 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   let reason = "";
 
   if (!op) {
-    reason = "Operatør ikke fundet";
+    reason = "Operat�r ikke fundet";
   } else if (delayMinutes < op.threshold) {
-    reason = `Forsinkelse under ${op.threshold} min â ikke berettiget`;
+    reason = `Forsinkelse under ${op.threshold} min — ikke berettiget`;
   } else if (delayMinutes >= 120) {
     rate = 1.0; eligible = true;
   } else if (delayMinutes >= 60) {
@@ -426,7 +426,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
 
   useEffect(() => {
     if (eligible) setCompensation({ compensation, ourFee, youGet, currency, op });
-  }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operatør]);
+  }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operat�r]);
 
   return (
     <div>
@@ -439,7 +439,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
         border: `1px solid ${eligible ? "rgba(76,175,122,0.3)" : "rgba(255,107,107,0.3)"}`,
         borderRadius: 12, padding: 24, marginBottom: 24
       }}>
-        <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "â" : "â"}</div>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "✅" : "❌"}</div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#4CAF7A" : "#ff6b6b", marginBottom: 4 }}>
           {eligible ? "Du er berettiget til kompensation" : "Ikke berettiget"}
         </div>
@@ -475,7 +475,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
         <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #2d2d4e", borderRadius: 8, color: "#6a6a8a", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
-          â Tilbage
+          ← Tilbage
         </button>
         {eligible && (
           <button onClick={onNext} style={{
@@ -483,7 +483,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
             border: "none", borderRadius: 8, cursor: "pointer",
             fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700
           }}>
-            GenerÃ©r klageskema â
+            Generér klageskema →
           </button>
         )}
       </div>
@@ -491,9 +491,9 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   );
 }
 
-// ââ Pure JS PDF builder (no external CDN) âââââââââââââââââââââââââââââââââââ
+// - Pure JS PDF builder (no external CDN) -
 function buildPdf(pages) {
-  // Minimal PDF-1.4 builder â text + rectangles + lines only
+  // Minimal PDF-1.4 builder — text + rectangles + lines only
   const enc = s => {
     let out = '';
     for (let i = 0; i < s.length; i++) {
@@ -644,7 +644,7 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   fld('Date of travel (DD/MM/YYYY)',info.dato,m,y,hw);
   fld('Scheduled departure time',info.tidspunkt,m+hw+8,y,hw);
   y-=26;
-  fld('Railway undertaking (operator)',info.operatør||'',m,y,hw);
+  fld('Railway undertaking (operator)',info.operat�r||'',m,y,hw);
   fld('Train number (if known)','',m+hw+8,y,hw);
   y-=26;
   text('Delay at final destination:',m,y+1,8,dark);
@@ -703,7 +703,7 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
 
   // SUBMIT
   line(m,y,W-m,y,[0.6,0.6,0.6],0.8); y-=13;
-  text('SUBMIT TO: '+( info.operatør||'')+'  -  '+(comp.op.authority)+'  -  '+(comp.op.url),m,y,7.5,blue,true);
+  text('SUBMIT TO: '+( info.operat�r||'')+'  -  '+(comp.op.authority)+'  -  '+(comp.op.url),m,y,7.5,blue,true);
   y-=13;
   text('This form may be submitted electronically or on paper to any EU railway undertaking (Reg. EU 2021/782).',m,y,7,mid);
 
@@ -761,7 +761,7 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   text('Til: '+info.til,m+240,y,9.5,dark,true); y-=15;
   text('Dato: '+info.dato,m,y,9.5,dark);
   text('Forsinkelse: '+info.forsinkelse,m+140,y,9.5,dark); y-=15;
-  text('Operatoer: '+(info.operatør||''),m,y,9.5,dark); y-=15;
+  text('Operatoer: '+(info.operat�r||''),m,y,9.5,dark); y-=15;
   text('Kompensationskrav: '+comp.compensation.toFixed(2)+' '+info.valuta+' (jf. EU 2021/782, Art. 19)',m,y,9.5,blue,true);
   y-=32;
 
@@ -805,7 +805,7 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
 }
 
 function downloadPdf(bytes, filename) {
-  // Convert to base64 data URI â avoids Blob/createObjectURL sandbox restrictions
+  // Convert to base64 data URI — avoids Blob/createObjectURL sandbox restrictions
   let binary = '';
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   const b64 = btoa(binary);
@@ -848,7 +848,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
             dato: extractedInfo.dato,
             tidspunkt: extractedInfo.tidspunkt,
             forsinkelse: extractedInfo.forsinkelse,
-            operatoer: extractedInfo.operatør || "",
+            operatoer: extractedInfo.operat�r || "",
             billetpris: extractedInfo.billetpris,
             valuta: extractedInfo.valuta || "DKK",
           },
@@ -935,12 +935,12 @@ function FormStep({ extractedInfo, compensation, onBack }) {
             />
             {iban.length > 4 && !ibanValidation.valid && ibanValidation.error && (
               <div style={{ color:"#CC4444", fontSize:11, marginTop:4, fontFamily:mono }}>
-                ⚠️ {ibanValidation.error}
+                � {ibanValidation.error}
               </div>
             )}
             {ibanValidation.valid && (
               <div style={{ color:"#4CAF7A", fontSize:11, marginTop:4, fontFamily:mono }}>
-                ✅ Valid IBAN{ibanValidation.country ? " · " + ibanValidation.country : ""}
+                 Valid IBAN{ibanValidation.country ? " � " + ibanValidation.country : ""}
               </div>
             )}
           </div>
@@ -979,12 +979,12 @@ function FormStep({ extractedInfo, compensation, onBack }) {
           <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10, letterSpacing:"0.08em" }}>VI GENERERER 2 DOKUMENTER</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
             <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}>
-              <div style={{ fontSize:20, marginBottom:4 }}>ð</div>
+              <div style={{ fontSize:20, marginBottom:4 }}>📄</div>
               <div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>EU-blanket 2024/949</div>
               <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Officiel EU-formular, auto-udfyldt</div>
             </div>
             <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}>
-              <div style={{ fontSize:20, marginBottom:4 }}>âï¸</div>
+              <div style={{ fontSize:20, marginBottom:4 }}>✍️</div>
               <div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>Fuldmagt</div>
               <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Bemyndiger os til at indsende</div>
             </div>
@@ -996,7 +996,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
           style={{ display:"flex", gap:10, cursor:"pointer", alignItems:"flex-start", padding:"12px", background: agreed ? "rgba(76,175,122,0.07)" : "#111128", border:`1px solid ${agreed ? "rgba(76,175,122,0.4)" : "#2d2d4e"}`, borderRadius:8, transition:"all 0.2s" }}
         >
           <div style={{ width:16, height:16, border:`2px solid ${agreed ? "#4CAF7A" : "#4a4a6a"}`, borderRadius:3, background: agreed ? "#4CAF7A" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {agreed && <span style={{ color:"white", fontSize:10, fontWeight:700 }}>â</span>}
+            {agreed && <span style={{ color:"white", fontSize:10, fontWeight:700 }}>✓</span>}
           </div>
           <span style={{ fontFamily:mono, fontSize:11, color:"#8a8aaa", lineHeight:1.6 }}>
             Jeg giver EU Rail Refund ApS fuldmagt til at indgive klagen paa mine vegne og accepterer 25% honorar. Ingen betaling ved afvisning.
@@ -1006,14 +1006,14 @@ function FormStep({ extractedInfo, compensation, onBack }) {
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:12, marginTop:20 }}>
         <button onClick={onBack} style={{ padding:"13px", background:"transparent", border:"1px solid #2d2d4e", borderRadius:8, color:"#6a6a8a", cursor:"pointer", fontFamily:mono, fontSize:13 }}>
-          â Tilbage
+          ← Tilbage
         </button>
         <button
           onClick={() => setSubStep("sign")}
           disabled={!canGo}
           style={{ padding:"13px", background: canGo ? "#C8A96E" : "#1a1a2e", color: canGo ? "#0a0a1a" : "#3a3a5a", border:"none", borderRadius:8, cursor: canGo ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700, transition:"all 0.2s" }}
         >
-          Fortsaet til underskrift â
+          Fortsaet til underskrift →
         </button>
       </div>
     </div>
@@ -1027,15 +1027,15 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       <div style={{ background:"#0d0d20", border:"1px solid #2d2d4e", borderRadius:10, padding:18, marginBottom:20 }}>
         <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginBottom:12, letterSpacing:"0.1em" }}>DU UNDERSKRIVER</div>
         {[
-          ["ð EU-blanket (2024/949)", "Kompensationskrav: " + compensation.compensation.toFixed(0) + " " + extractedInfo.valuta],
-          ["âï¸ Fuldmagt til EU Rail Refund ApS", extractedInfo.fra + " â " + extractedInfo.til + " Â· " + extractedInfo.dato],
+          ["📄 EU-blanket (2024/949)", "Kompensationskrav: " + compensation.compensation.toFixed(0) + " " + extractedInfo.valuta],
+          ["✍️ Fuldmagt til EU Rail Refund ApS", extractedInfo.fra + " → " + extractedInfo.til + " · " + extractedInfo.dato],
         ].map(([title, sub]) => (
           <div key={title} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:"1px solid #1a1a2e" }}>
             <div>
               <div style={{ fontFamily:mono, fontSize:12, color:"#e8e0d0" }}>{title}</div>
               <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:2 }}>{sub}</div>
             </div>
-            <div style={{ color: signed ? "#4CAF7A" : "#4a4a6a", fontSize:20 }}>{signed ? "â" : "â"}</div>
+            <div style={{ color: signed ? "#4CAF7A" : "#4a4a6a", fontSize:20 }}>{signed ? "✓" : "○"}</div>
           </div>
         ))}
       </div>
@@ -1057,14 +1057,14 @@ function FormStep({ extractedInfo, compensation, onBack }) {
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:12 }}>
         <button onClick={() => setSubStep("details")} style={{ padding:"13px", background:"transparent", border:"1px solid #2d2d4e", borderRadius:8, color:"#6a6a8a", cursor:"pointer", fontFamily:mono, fontSize:13 }}>
-          â Tilbage
+          ← Tilbage
         </button>
         <button
           onClick={doGenerate}
           disabled={!signed || loading}
           style={{ padding:"13px", background: signed && !loading ? "#C8A96E" : "#1a1a2e", color: signed && !loading ? "#0a0a1a" : "#3a3a5a", border:"none", borderRadius:8, cursor: signed ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700 }}
         >
-          {loading ? "â³  Genererer PDFer..." : "âï¸  Underskriv og download PDF â"}
+          {loading ? "⟳  Genererer PDFer..." : "✍️  Underskriv og download PDF →"}
         </button>
       </div>
     </div>
@@ -1072,15 +1072,15 @@ function FormStep({ extractedInfo, compensation, onBack }) {
 
   return (
     <div style={{ textAlign:"center", padding:"10px 0" }}>
-      <div style={{ fontSize:52, marginBottom:16 }}>ð</div>
+      <div style={{ fontSize:52, marginBottom:16 }}>🎉</div>
       <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#e8e0d0", marginBottom:10, fontWeight:400 }}>Dokumenter downloadet!</h2>
       <p style={{ fontFamily:mono, fontSize:13, color:"#6a6a8a", marginBottom:20, lineHeight:1.8 }}>
         2 PDF-filer er downloadet. Send begge til <strong style={{ color:"#C8A96E" }}>{compensation.op.authority}</strong>.
       </p>
       <div style={{ display:"grid", gap:10, textAlign:"left", background:"#111128", borderRadius:10, padding:18, marginBottom:20 }}>
         {[
-          ["ð EU-blanket-togkompensation.pdf", "Officiel EU 2024/949 formular â send til operatøren"],
-          ["âï¸ Fuldmagt-EU-Rail-Refund.pdf", "Fuldmagt â vedlaeg til klagen"],
+          ["📄 EU-blanket-togkompensation.pdf", "Officiel EU 2024/949 formular — send til operat�ren"],
+          ["✍️ Fuldmagt-EU-Rail-Refund.pdf", "Fuldmagt — vedlaeg til klagen"],
         ].map(([file, desc]) => (
           <div key={file}>
             <div style={{ fontFamily:mono, fontSize:12, color:"#e8e0d0" }}>{file}</div>
@@ -1091,9 +1091,9 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left" }}>
         <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10 }}>NAESTE SKRIDT</div>
         <div style={{ fontFamily:mono, fontSize:12, color:"#8a8aaa", lineHeight:2 }}>
-          1. Email begge PDF-filer til {extractedInfo.operatør}<br/>
+          1. Email begge PDF-filer til {extractedInfo.operat�r}<br/>
           2. CC: {compensation.op.authority} ({compensation.op.url})<br/>
-          3. Operatøren har 30 dage til at svare (Reg. EU 2021/782)<br/>
+          3. Operat�ren har 30 dage til at svare (Reg. EU 2021/782)<br/>
           4. Vi rykker automatisk hvis ingen svar
         </div>
       </div>
@@ -1130,11 +1130,11 @@ export default function App() {
         {/* Header */}
         <div style={{ marginBottom: 32, textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(200,169,110,0.08)", border: "1px solid rgba(200,169,110,0.2)", borderRadius: 100, padding: "6px 16px", marginBottom: 20 }}>
-            <span style={{ fontSize: 16 }}>ð</span>
+            <span style={{ fontSize: 16 }}>🚆</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase" }}>EU Rail Refund</span>
           </div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#e8e0d0", margin: 0, fontWeight: 400, lineHeight: 1.2 }}>
-            Få dine penge<br /><em style={{ color: "#C8A96E" }}>tilbage</em>
+            F� dine penge<br /><em style={{ color: "#C8A96E" }}>tilbage</em>
           </h1>
           <p style={{ color: "#4a4a6a", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
             POWERED BY EU-FORORDNING 1371/2007
@@ -1158,13 +1158,13 @@ export default function App() {
         </div>
 
         <p style={{ textAlign: "center", color: "#2a2a3a", fontSize: 11, fontFamily: "'DM Mono', monospace", marginTop: 20 }}>
-          Vi tager 25% af kompensationen â intet at betale hvis vi ikke vinder
+          Vi tager 25% af kompensationen — intet at betale hvis vi ikke vinder
         </p>
       </div>
 
       <Head>
-        <title>EU Rail Refund â Få dine penge tilbage</title>
-        <meta name="description" content="KrÃ¦v togkompensation automatisk under EU-forordning 2021/782" />
+        <title>EU Rail Refund — F� dine penge tilbage</title>
+        <meta name="description" content="Kræv togkompensation automatisk under EU-forordning 2021/782" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
