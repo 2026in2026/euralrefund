@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import Head from "next/head";
 
-// ─── IBAN validation (checksum + country + BIC) ──────────────────────────────
+// --- IBAN validation (checksum + country + BIC) ---
 const IBAN_LENGTHS = {
   AD:24,AE:23,AL:28,AT:20,AZ:28,BA:20,BE:16,BG:22,BH:22,BR:29,BY:28,
   CH:21,CR:22,CY:28,CZ:24,DE:22,DK:18,DO:28,EE:20,EG:29,ES:24,FI:18,
@@ -55,7 +55,7 @@ function validateIBAN(raw) {
   if (remainder !== 1n) return { valid: false, error: "Invalid checksum — please double-check the number", country: COUNTRY_NAMES[cc]||cc, suggestedBic: "" };
   return { valid: true, country: COUNTRY_NAMES[cc] || cc, suggestedBic: COUNTRY_BIC[cc] || "" };
 }
-// ──────────────────────────────────────────────────────────────────────────────
+// ---
 
 const STEPS = ["upload", "details", "result", "form"];
 
@@ -180,7 +180,7 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
   "til": "destinationsstation fulde navn",
   "dato": "DD.MM.YYYY",
   "tidspunkt": "HH:MM",
-  "operatÃ¸r": "jernbaneselskabets navn (f.eks. DSB, DB, SNCF, Eurostar, NS, ÃBB, Trenitalia, Renfe)",
+  "operatør": "jernbaneselskabets navn (f.eks. DSB, DB, SNCF, Eurostar, NS, ÃBB, Trenitalia, Renfe)",
   "billetpris": 549,
   "valuta": "DKK",
   "bekrÃ¦ftet": true
@@ -198,14 +198,14 @@ Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet
       const parsed = JSON.parse(clean);
 
       // Normalize operator name to match our dropdown
-      const normalizedOp = normalizeOperator(parsed.operatÃ¸r || "");
-      const enriched = { ...parsed, operatÃ¸r: normalizedOp };
+      const normalizedOp = normalizeOperator(parsed.operatør || "");
+      const enriched = { ...parsed, operatør: normalizedOp };
 
       setTicketData({ file, base64, mediaType });
       setExtractedInfo(enriched);
       onNext();
     } catch (e) {
-      setError("Kunne ikke lÃ¦se billetten. PrÃ¸v et klarere billede.");
+      setError("Kunne ikke lÃ¦se billetten. Prøv et klarere billede.");
     } finally {
       setLoading(false);
     }
@@ -243,7 +243,7 @@ Hvis du ikke kan finde et felt, sÃ¦t det til null. Returner altid bekrÃ¦ftet
         ) : (
           <div>
             <div style={{ color: "#8a8aaa", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>TrÃ¦k fil hertil eller klik for at vÃ¦lge</div>
-            <div style={{ color: "#4a4a6a", fontSize: 12, marginTop: 6 }}>UnderstÃ¸tter PDF, JPG, PNG</div>
+            <div style={{ color: "#4a4a6a", fontSize: 12, marginTop: 6 }}>Understøtter PDF, JPG, PNG</div>
           </div>
         )}
       </div>
@@ -283,8 +283,8 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
     boxSizing: "border-box", transition: "border-color 0.2s"
   });
 
-  const autoCount = ["fra","til","dato","tidspunkt","operatÃ¸r","billetpris"].filter(k => autoFilled(k)).length;
-  const canProceed = extractedInfo?.fra && extractedInfo?.til && extractedInfo?.operatÃ¸r && extractedInfo?.forsinkelse && extractedInfo?.billetpris;
+  const autoCount = ["fra","til","dato","tidspunkt","operatør","billetpris"].filter(k => autoFilled(k)).length;
+  const canProceed = extractedInfo?.fra && extractedInfo?.til && extractedInfo?.operatør && extractedInfo?.forsinkelse && extractedInfo?.billetpris;
 
   return (
     <div>
@@ -296,7 +296,7 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(76,175,122,0.08)", border: "1px solid rgba(76,175,122,0.25)", borderRadius: 8, padding: "10px 14px", marginBottom: 24 }}>
           <span style={{ fontSize: 18 }}>â</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#4CAF7A" }}>
-            Vi lÃ¦ste <strong>{autoCount} felter</strong> automatisk fra din billet â tjek og ret hvis nÃ¸dvendigt
+            Vi lÃ¦ste <strong>{autoCount} felter</strong> automatisk fra din billet â tjek og ret hvis nødvendigt
           </span>
         </div>
       ) : (
@@ -332,14 +332,14 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
           ))}
         </div>
 
-        {/* OperatÃ¸r */}
+        {/* Operatør */}
         <div>
           <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-            JernbaneoperatÃ¸r
-            {autoFilled("operatÃ¸r") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
+            Jernbaneoperatør
+            {autoFilled("operatør") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
           </label>
-          <select value={extractedInfo?.operatÃ¸r || ""} onChange={e => update("operatÃ¸r", e.target.value)} style={{ ...fieldStyle("operatÃ¸r"), color: extractedInfo?.operatÃ¸r ? "#e8e0d0" : "#4a4a6a" }}>
-            <option value="">VÃ¦lg operatÃ¸r...</option>
+          <select value={extractedInfo?.operatør || ""} onChange={e => update("operatør", e.target.value)} style={{ ...fieldStyle("operatør"), color: extractedInfo?.operatør ? "#e8e0d0" : "#4a4a6a" }}>
+            <option value="">VÃ¦lg operatør...</option>
             {operators.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
         </div>
@@ -399,7 +399,7 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
 }
 
 function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
-  const op = OPERATORS[extractedInfo?.operatÃ¸r];
+  const op = OPERATORS[extractedInfo?.operatør];
   const delayMap = { "30-59 min": 45, "60-119 min": 90, "120+ min": 150 };
   const delayMinutes = delayMap[extractedInfo?.forsinkelse] || 0;
   const price = parseFloat(extractedInfo?.billetpris) || 0;
@@ -409,7 +409,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   let reason = "";
 
   if (!op) {
-    reason = "OperatÃ¸r ikke fundet";
+    reason = "Operatør ikke fundet";
   } else if (delayMinutes < op.threshold) {
     reason = `Forsinkelse under ${op.threshold} min â ikke berettiget`;
   } else if (delayMinutes >= 120) {
@@ -426,7 +426,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
 
   useEffect(() => {
     if (eligible) setCompensation({ compensation, ourFee, youGet, currency, op });
-  }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operatÃ¸r]);
+  }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operatør]);
 
   return (
     <div>
@@ -644,7 +644,7 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   fld('Date of travel (DD/MM/YYYY)',info.dato,m,y,hw);
   fld('Scheduled departure time',info.tidspunkt,m+hw+8,y,hw);
   y-=26;
-  fld('Railway undertaking (operator)',info.operatÃ¸r||'',m,y,hw);
+  fld('Railway undertaking (operator)',info.operatør||'',m,y,hw);
   fld('Train number (if known)','',m+hw+8,y,hw);
   y-=26;
   text('Delay at final destination:',m,y+1,8,dark);
@@ -703,7 +703,7 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
 
   // SUBMIT
   line(m,y,W-m,y,[0.6,0.6,0.6],0.8); y-=13;
-  text('SUBMIT TO: '+( info.operatÃ¸r||'')+'  -  '+(comp.op.authority)+'  -  '+(comp.op.url),m,y,7.5,blue,true);
+  text('SUBMIT TO: '+( info.operatør||'')+'  -  '+(comp.op.authority)+'  -  '+(comp.op.url),m,y,7.5,blue,true);
   y-=13;
   text('This form may be submitted electronically or on paper to any EU railway undertaking (Reg. EU 2021/782).',m,y,7,mid);
 
@@ -761,7 +761,7 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   text('Til: '+info.til,m+240,y,9.5,dark,true); y-=15;
   text('Dato: '+info.dato,m,y,9.5,dark);
   text('Forsinkelse: '+info.forsinkelse,m+140,y,9.5,dark); y-=15;
-  text('Operatoer: '+(info.operatÃ¸r||''),m,y,9.5,dark); y-=15;
+  text('Operatoer: '+(info.operatør||''),m,y,9.5,dark); y-=15;
   text('Kompensationskrav: '+comp.compensation.toFixed(2)+' '+info.valuta+' (jf. EU 2021/782, Art. 19)',m,y,9.5,blue,true);
   y-=32;
 
@@ -848,7 +848,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
             dato: extractedInfo.dato,
             tidspunkt: extractedInfo.tidspunkt,
             forsinkelse: extractedInfo.forsinkelse,
-            operatoer: extractedInfo.operatÃ¸r || "",
+            operatoer: extractedInfo.operatør || "",
             billetpris: extractedInfo.billetpris,
             valuta: extractedInfo.valuta || "DKK",
           },
@@ -1079,7 +1079,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       </p>
       <div style={{ display:"grid", gap:10, textAlign:"left", background:"#111128", borderRadius:10, padding:18, marginBottom:20 }}>
         {[
-          ["ð EU-blanket-togkompensation.pdf", "Officiel EU 2024/949 formular â send til operatÃ¸ren"],
+          ["ð EU-blanket-togkompensation.pdf", "Officiel EU 2024/949 formular â send til operatøren"],
           ["âï¸ Fuldmagt-EU-Rail-Refund.pdf", "Fuldmagt â vedlaeg til klagen"],
         ].map(([file, desc]) => (
           <div key={file}>
@@ -1091,9 +1091,9 @@ function FormStep({ extractedInfo, compensation, onBack }) {
       <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left" }}>
         <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10 }}>NAESTE SKRIDT</div>
         <div style={{ fontFamily:mono, fontSize:12, color:"#8a8aaa", lineHeight:2 }}>
-          1. Email begge PDF-filer til {extractedInfo.operatÃ¸r}<br/>
+          1. Email begge PDF-filer til {extractedInfo.operatør}<br/>
           2. CC: {compensation.op.authority} ({compensation.op.url})<br/>
-          3. OperatÃ¸ren har 30 dage til at svare (Reg. EU 2021/782)<br/>
+          3. Operatøren har 30 dage til at svare (Reg. EU 2021/782)<br/>
           4. Vi rykker automatisk hvis ingen svar
         </div>
       </div>
@@ -1134,7 +1134,7 @@ export default function App() {
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase" }}>EU Rail Refund</span>
           </div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#e8e0d0", margin: 0, fontWeight: 400, lineHeight: 1.2 }}>
-            FÃ¥ dine penge<br /><em style={{ color: "#C8A96E" }}>tilbage</em>
+            Få dine penge<br /><em style={{ color: "#C8A96E" }}>tilbage</em>
           </h1>
           <p style={{ color: "#4a4a6a", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
             POWERED BY EU-FORORDNING 1371/2007
@@ -1163,7 +1163,7 @@ export default function App() {
       </div>
 
       <Head>
-        <title>EU Rail Refund â FÃ¥ dine penge tilbage</title>
+        <title>EU Rail Refund â Få dine penge tilbage</title>
         <meta name="description" content="KrÃ¦v togkompensation automatisk under EU-forordning 2021/782" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
