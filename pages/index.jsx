@@ -407,7 +407,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
       }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "✅" : "❌"}</div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#4CAF7A" : "#ff6b6b", marginBottom: 4 }}>
-          {eligible ? "Du er berettiget til kompensation" : "Ikke berettiget"}
+          {eligible ? "Baseret på de oplyste informationer kan du være berettiget til kompensation" : "Ikke berettiget"}
         </div>
         {!eligible && <div style={{ color: "#6a6a8a", fontSize: 13, fontFamily: "'DM Mono', monospace" }}>{reason}</div>}
       </div>
