@@ -141,7 +141,7 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
       const contentBlock = isImage
         ? { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } }
         : { type: "document", source: { type: "base64", media_type: mediaType, data: base64 } };
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/analyse-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
