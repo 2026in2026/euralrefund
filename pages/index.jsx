@@ -1,50 +1,42 @@
 import { useState, useRef, useEffect } from "react";
 import Head from "next/head";
 
-// âââ IBAN validation (checksum + country + BIC) ââââââââââââââââââââââââââââââ
-const IBAN_LENGTHS = {
-  AD:24,AE:23,AL:28,AT:20,AZ:28,BA:20,BE:16,BG:22,BH:22,BR:29,BY:28,
-  CH:21,CR:22,CY:28,CZ:24,DE:22,DK:18,DO:28,EE:20,EG:29,ES:24,FI:18,
-  FO:18,FR:27,GB:22,GE:22,GI:23,GL:18,GR:27,GT:28,HR:21,HU:28,IE:22,
-  IL:23,IQ:23,IS:26,IT:27,JO:30,KW:30,KZ:20,LB:28,LC:32,LI:21,LT:20,
-  LU:20,LV:21,LY:25,MC:27,MD:24,ME:22,MK:19,MR:27,MT:31,MU:30,MZ:25,
-  NL:18,NO:15,PK:24,PL:28,PS:29,PT:25,QA:29,RO:24,RS:22,SA:24,SC:31,
-  SD:18,SE:24,SI:19,SK:24,SM:27,ST:25,SV:28,TL:23,TN:24,TR:26,UA:29,
-  VA:22,VG:24,XK:20,
+// --- EU-ONLY IBAN validation ---
+const EU_IBAN_LENGTHS = {
+  AT:20, BE:16, BG:22, CY:28, CZ:24, DE:22, DK:18, EE:20, ES:24, FI:18,
+  FO:18, FR:27, GB:22, GI:23, GL:18, GR:27, HR:21, HU:28, IE:22, IS:26,
+  IT:27, LI:21, LT:20, LU:20, LV:21, MC:27, MT:31, NL:18, NO:15, PL:28,
+  PT:25, RO:24, SE:24, SI:19, SK:24, SM:27,
 };
-const COUNTRY_NAMES = {
-  AD:"Andorra",AE:"UAE",AL:"Albania",AT:"Austria",AZ:"Azerbaijan",
-  BA:"Bosnia",BE:"Belgium",BG:"Bulgaria",BH:"Bahrain",BR:"Brazil",
-  BY:"Belarus",CH:"Switzerland",CR:"Costa Rica",CY:"Cyprus",CZ:"Czech Republic",
-  DE:"Germany",DK:"Denmark",DO:"Dominican Republic",EE:"Estonia",EG:"Egypt",
-  ES:"Spain",FI:"Finland",FO:"Faroe Islands",FR:"France",GB:"United Kingdom",
-  GE:"Georgia",GI:"Gibraltar",GL:"Greenland",GR:"Greece",GT:"Guatemala",
-  HR:"Croatia",HU:"Hungary",IE:"Ireland",IL:"Israel",IQ:"Iraq",IS:"Iceland",
-  IT:"Italy",JO:"Jordan",KW:"Kuwait",KZ:"Kazakhstan",LB:"Lebanon",LC:"St. Lucia",
-  LI:"Liechtenstein",LT:"Lithuania",LU:"Luxembourg",LV:"Latvia",LY:"Libya",
-  MC:"Monaco",MD:"Moldova",ME:"Montenegro",MK:"North Macedonia",MR:"Mauritania",
-  MT:"Malta",MU:"Mauritius",MZ:"Mozambique",NL:"Netherlands",NO:"Norway",
-  PK:"Pakistan",PL:"Poland",PS:"Palestine",PT:"Portugal",QA:"Qatar",RO:"Romania",
-  RS:"Serbia",SA:"Saudi Arabia",SC:"Seychelles",SE:"Sweden",SI:"Slovenia",
-  SK:"Slovakia",SM:"San Marino",ST:"Sao Tome",SV:"El Salvador",TN:"Tunisia",
-  TR:"Turkey",UA:"Ukraine",VA:"Vatican",VG:"British Virgin Islands",XK:"Kosovo",
+
+const EU_COUNTRY_NAMES = {
+  AT:"Austria", BE:"Belgium", BG:"Bulgaria", CY:"Cyprus", CZ:"Czech Republic",
+  DE:"Germany", DK:"Denmark", EE:"Estonia", ES:"Spain", FI:"Finland",
+  FO:"Faroe Islands", FR:"France", GB:"United Kingdom", GI:"Gibraltar",
+  GL:"Greenland", GR:"Greece", HR:"Croatia", HU:"Hungary", IE:"Ireland",
+  IS:"Iceland", IT:"Italy", LI:"Liechtenstein", LT:"Lithuania", LU:"Luxembourg",
+  LV:"Latvia", MC:"Monaco", MT:"Malta", NL:"Netherlands", NO:"Norway",
+  PL:"Poland", PT:"Portugal", RO:"Romania", SE:"Sweden", SI:"Slovenia",
+  SK:"Slovakia", SM:"San Marino",
 };
+
 const COUNTRY_BIC = {
-  DK:"DABADKKK",DE:"DEUTDEDB",GB:"NWBKGB2L",FR:"BNPAFRPP",ES:"CAIXESBB",
-  IT:"UNCRITM1",NL:"INGBNL2A",BE:"GEBABEBB",SE:"SWEDSESS",NO:"DNBANOKK",
-  FI:"NDEAFIHH",PL:"PKOPPLPW",AT:"BKAUATWW",CH:"UBSWCHZH",PT:"CGDIPTPL",
-  IE:"AIBKIE2D",GR:"ETHNGRAA",CZ:"GIBACZPX",SK:"SUBASKBX",HU:"OTPVHUHB",
-  RO:"BRDEROBUXXX",HR:"PBZGHR2X",SI:"LJBASI2X",LU:"BILLLULL",
+  DK:"DABADKKK", DE:"DEUTDEDB", GB:"NWBKGB2L", FR:"BNPAFRPP", ES:"CAIXESBB",
+  IT:"UNCRITM1", NL:"INGBNL2A", BE:"GEBABEBB", SE:"SWEDSESS", NO:"DNBANOKK",
+  FI:"NDEAFIHH", PL:"PKOPPLPW", AT:"BKAUATWW", PT:"CGDIPTPL", IE:"AIBKIE2D",
+  GR:"ETHNGRAA", CZ:"GIBACZPX", SK:"SUBASKBX", HU:"OTPVHUHB", RO:"BRDEROBUXXX",
+  HR:"PBZGHR2X", SI:"LJBASI2X", LU:"BILLLULL",
 };
+
 function validateIBAN(raw) {
   const iban = raw.replace(/\s/g, "").toUpperCase();
   if (iban.length < 4) return { valid: false, error: null, country: "", suggestedBic: "" };
   const cc = iban.slice(0, 2);
-  if (!/^[A-Z]{2}$/.test(cc)) return { valid: false, error: "Start with 2-letter country code", country: "", suggestedBic: "" };
-  const expectedLen = IBAN_LENGTHS[cc];
-  if (!expectedLen) return { valid: false, error: "Unknown country code: " + cc, country: "", suggestedBic: "" };
+  if (!/^[A-Z]{2}$/.test(cc)) return { valid: false, error: "Start with 2-letter country code (e.g. DK, DE, FR)", country: "", suggestedBic: "" };
+  if (!EU_IBAN_LENGTHS[cc]) return { valid: false, error: `Only EU/EEA IBANs are accepted (country: ${cc} not supported)`, country: "", suggestedBic: "" };
+  const expectedLen = EU_IBAN_LENGTHS[cc];
   if (iban.length !== expectedLen)
-    return { valid: false, error: "Should be " + expectedLen + " chars for " + (COUNTRY_NAMES[cc]||cc) + " (got " + iban.length + ")", country: "", suggestedBic: "" };
+    return { valid: false, error: `Should be ${expectedLen} chars for ${EU_COUNTRY_NAMES[cc]||cc} (got ${iban.length})`, country: "", suggestedBic: "" };
   const rearranged = iban.slice(4) + iban.slice(0, 4);
   let remainder = 0n;
   for (const ch of rearranged) {
@@ -52,10 +44,9 @@ function validateIBAN(raw) {
     const digit = code >= 65 ? BigInt(code - 55) : BigInt(code - 48);
     remainder = (remainder * (digit >= 10n ? 100n : 10n) + digit) % 97n;
   }
-  if (remainder !== 1n) return { valid: false, error: "Invalid checksum â please double-check the number", country: COUNTRY_NAMES[cc]||cc, suggestedBic: "" };
-  return { valid: true, country: COUNTRY_NAMES[cc] || cc, suggestedBic: COUNTRY_BIC[cc] || "" };
+  if (remainder !== 1n) return { valid: false, error: "Invalid checksum — please double-check the number", country: EU_COUNTRY_NAMES[cc]||cc, suggestedBic: "" };
+  return { valid: true, country: EU_COUNTRY_NAMES[cc] || cc, suggestedBic: COUNTRY_BIC[cc] || "" };
 }
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const STEPS = ["upload", "details", "result", "form"];
 
@@ -65,38 +56,32 @@ const OPERATORS = {
   "SNCF (Frankrig)": { threshold: 60, rate: 0.25, authority: "ARAFER", url: "https://www.autorite-transports.fr" },
   "Eurostar": { threshold: 60, rate: 0.5, authority: "ORR (UK)", url: "https://www.orr.gov.uk" },
   "NS (Holland)": { threshold: 30, rate: 0.5, authority: "ACM", url: "https://www.acm.nl" },
-  "ÃÂBB (ÃÂstrig)": { threshold: 60, rate: 0.5, authority: "Schienen-Control", url: "https://www.schienen-control.gv.at" },
+  "ÖBB (Østrig)": { threshold: 60, rate: 0.5, authority: "Schienen-Control", url: "https://www.schienen-control.gv.at" },
   "Trenitalia (Italien)": { threshold: 60, rate: 0.25, authority: "ART", url: "https://www.autorita-trasporti.it" },
   "Renfe (Spanien)": { threshold: 60, rate: 0.5, authority: "CNMC", url: "https://www.cnmc.es" },
 };
 
-const DELAY_OPTIONS = ["30-59 min", "60-119 min", "120+ min"];
+const DELAY_OPTIONS = [
+  { label: "60–119 min", value: "60-119 min", refund: "25% refund", eligible: true },
+  { label: "120+ min", value: "120+ min", refund: "50% refund", eligible: true },
+  { label: "Under 60 min", value: "under-60 min", refund: "Not eligible", eligible: false },
+];
 
-// Fuzzy-match extracted operator name to our known operators
 const OPERATOR_ALIASES = {
-  "dsb": "DSB (Danmark)",
-  "danske statsbaner": "DSB (Danmark)",
-  "db": "DB (Tyskland)",
-  "deutsche bahn": "DB (Tyskland)",
-  "sncf": "SNCF (Frankrig)",
-  "eurostar": "Eurostar",
-  "ns": "NS (Holland)",
-  "nederlandse spoorwegen": "NS (Holland)",
-  "ÃÂ¶bb": "ÃÂBB (ÃÂstrig)",
-  "obb": "ÃÂBB (ÃÂstrig)",
-  "ÃÂ¶sterreichische bundesbahnen": "ÃÂBB (ÃÂstrig)",
-  "trenitalia": "Trenitalia (Italien)",
-  "renfe": "Renfe (Spanien)",
+  "dsb": "DSB (Danmark)", "danske statsbaner": "DSB (Danmark)",
+  "db": "DB (Tyskland)", "deutsche bahn": "DB (Tyskland)",
+  "sncf": "SNCF (Frankrig)", "eurostar": "Eurostar",
+  "ns": "NS (Holland)", "nederlandse spoorwegen": "NS (Holland)",
+  "öbb": "ÖBB (Østrig)", "obb": "ÖBB (Østrig)", "österreichische bundesbahnen": "ÖBB (Østrig)",
+  "trenitalia": "Trenitalia (Italien)", "renfe": "Renfe (Spanien)",
 };
 
 function normalizeOperator(raw) {
   if (!raw) return "";
   const lower = raw.toLowerCase().trim();
-  // Direct alias match
   for (const [alias, canonical] of Object.entries(OPERATOR_ALIASES)) {
     if (lower.includes(alias)) return canonical;
   }
-  // Direct key match
   const directMatch = Object.keys(OPERATORS).find(k => k.toLowerCase().includes(lower) || lower.includes(k.toLowerCase().split(" ")[0].toLowerCase()));
   return directMatch || "";
 }
@@ -119,7 +104,7 @@ function ProgressBar({ step }) {
               color: active ? "#0a0a1a" : "#4a4a6a",
               fontWeight: 700, flexShrink: 0, transition: "all 0.3s ease"
             }}>
-              {i < STEPS.indexOf(step) ? "Ã¢ÂÂ" : i + 1}
+              {i < STEPS.indexOf(step) ? "✓" : i + 1}
             </div>
             <span style={{ fontSize: 11, color: active ? "#C8A96E" : "#3a3a5a", marginLeft: 6, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>{s}</span>
             {i < steps.length - 1 && (
@@ -139,10 +124,7 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
   const [error, setError] = useState("");
   const fileRef = useRef();
 
-  const handleFile = async (f) => {
-    setFile(f);
-    setError("");
-  };
+  const handleFile = async (f) => { setFile(f); setError(""); };
 
   const analyze = async () => {
     if (!file) return;
@@ -154,14 +136,11 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
         r.onerror = rej;
         r.readAsDataURL(file);
       });
-
       const isImage = file.type.startsWith("image/");
       const mediaType = isImage ? file.type : "application/pdf";
-
       const contentBlock = isImage
         ? { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } }
         : { type: "document", source: { type: "base64", media_type: mediaType, data: base64 } };
-
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -174,38 +153,23 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
               contentBlock,
               {
                 type: "text",
-                text: `Du er en billetlÃÂ¦ser. Analyser denne togbillet omhyggeligt og returner KUN gyldig JSON uden markdown eller forklaring:
-{
-  "fra": "afgangsstation fulde navn",
-  "til": "destinationsstation fulde navn",
-  "dato": "DD.MM.YYYY",
-  "tidspunkt": "HH:MM",
-  "operatÃÂ¸r": "jernbaneselskabets navn (f.eks. DSB, DB, SNCF, Eurostar, NS, ÃÂBB, Trenitalia, Renfe)",
-  "billetpris": 549,
-  "valuta": "DKK",
-  "bekrÃÂ¦ftet": true
-}
-Hvis du ikke kan finde et felt, sÃÂ¦t det til null. Returner altid bekrÃÂ¦ftet: true hvis du kan lÃÂ¦se billetten.`
+                text: `Du er en billetlæser. Analyser denne togbillet omhyggeligt og returner KUN gyldig JSON uden markdown eller forklaring:\n\n{\n  "fra": "afgangsstation fulde navn",\n  "til": "destinationsstation fulde navn",\n  "dato": "DD.MM.YYYY",\n  "tidspunkt": "HH:MM",\n  "operatør": "jernbaneselskabets navn (f.eks. DSB, DB, SNCF, Eurostar, NS, ÖBB, Trenitalia, Renfe)",\n  "billetpris": 549,\n  "valuta": "DKK",\n  "passagernavn": "fulde navn på billetten hvis synligt ellers null",\n  "bekræftet": true\n}\n\nHvis du ikke kan finde et felt, sæt det til null. Returner altid bekræftet: true hvis du kan læse billetten.`
               }
             ]
           }]
         })
       });
-
       const data = await response.json();
       const text = data.content?.find(b => b.type === "text")?.text || "{}";
       const clean = text.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
-
-      // Normalize operator name to match our dropdown
-      const normalizedOp = normalizeOperator(parsed.operatÃÂ¸r || "");
-      const enriched = { ...parsed, operatÃÂ¸r: normalizedOp };
-
+      const normalizedOp = normalizeOperator(parsed.operatør || "");
+      const enriched = { ...parsed, operatør: normalizedOp };
       setTicketData({ file, base64, mediaType });
       setExtractedInfo(enriched);
       onNext();
     } catch (e) {
-      setError("Kunne ikke lÃÂ¦se billetten. PrÃÂ¸v et klarere billede.");
+      setError("Kunne ikke læse billetten. Prøv et klarere billede.");
     } finally {
       setLoading(false);
     }
@@ -216,10 +180,12 @@ Hvis du ikke kan finde et felt, sÃÂ¦t det til null. Returner altid bekrÃ
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: 400 }}>
         Upload din billet
       </h2>
-      <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 28, fontFamily: "'DM Mono', monospace" }}>
-        PDF eller billede Ã¢ÂÂ vi lÃÂ¦ser detaljerne automatisk
+      <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 8, fontFamily: "'DM Mono', monospace" }}>
+        PDF eller billede — vi læser detaljerne automatisk
       </p>
-
+      <div style={{ background: "rgba(200,169,110,0.07)", border: "1px solid rgba(200,169,110,0.2)", borderRadius: 8, padding: "8px 12px", marginBottom: 20, fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E" }}>
+        ⚠ Billetupload er påkrævet for at indgive et krav — dette verificerer dit rejseforhold
+      </div>
       <div
         onClick={() => fileRef.current.click()}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -234,7 +200,7 @@ Hvis du ikke kan finde et felt, sÃÂ¦t det til null. Returner altid bekrÃ
         }}
       >
         <input ref={fileRef} type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
-        <div style={{ fontSize: 36, marginBottom: 12 }}>{file ? "Ã°ÂÂÂ«" : "Ã°ÂÂÂ"}</div>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>{file ? "🎫" : "📄"}</div>
         {file ? (
           <div>
             <div style={{ color: "#4CAF7A", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700 }}>{file.name}</div>
@@ -242,14 +208,12 @@ Hvis du ikke kan finde et felt, sÃÂ¦t det til null. Returner altid bekrÃ
           </div>
         ) : (
           <div>
-            <div style={{ color: "#8a8aaa", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>TrÃÂ¦k fil hertil eller klik for at vÃÂ¦lge</div>
-            <div style={{ color: "#4a4a6a", fontSize: 12, marginTop: 6 }}>UnderstÃÂ¸tter PDF, JPG, PNG</div>
+            <div style={{ color: "#8a8aaa", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>Træk fil hertil eller klik for at vælge</div>
+            <div style={{ color: "#4a4a6a", fontSize: 12, marginTop: 6 }}>Understøtter PDF, JPG, PNG</div>
           </div>
         )}
       </div>
-
       {error && <div style={{ color: "#ff6b6b", fontSize: 13, marginTop: 12, fontFamily: "'DM Mono', monospace" }}>{error}</div>}
-
       <button
         onClick={analyze}
         disabled={!file || loading}
@@ -262,7 +226,7 @@ Hvis du ikke kan finde et felt, sÃÂ¦t det til null. Returner altid bekrÃ
           letterSpacing: "0.05em", transition: "all 0.2s ease"
         }}
       >
-        {loading ? "Ã¢ÂÂ³  Analyserer billet..." : "AnalysÃÂ©r billet Ã¢ÂÂ"}
+        {loading ? "⟳  Analyserer billet..." : "Analysér billet →"}
       </button>
     </div>
   );
@@ -271,9 +235,7 @@ Hvis du ikke kan finde et felt, sÃÂ¦t det til null. Returner altid bekrÃ
 function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
   const operators = Object.keys(OPERATORS);
   const update = (k, v) => setExtractedInfo(p => ({ ...p, [k]: v }));
-
   const autoFilled = (key) => extractedInfo?.[key] !== null && extractedInfo?.[key] !== undefined && extractedInfo?.[key] !== "";
-
   const fieldStyle = (key) => ({
     width: "100%", padding: "12px 14px",
     background: autoFilled(key) ? "rgba(76,175,122,0.08)" : "#111128",
@@ -282,31 +244,29 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
     fontFamily: "'DM Mono', monospace", fontSize: 14, outline: "none",
     boxSizing: "border-box", transition: "border-color 0.2s"
   });
-
-  const autoCount = ["fra","til","dato","tidspunkt","operatÃÂ¸r","billetpris"].filter(k => autoFilled(k)).length;
-  const canProceed = extractedInfo?.fra && extractedInfo?.til && extractedInfo?.operatÃÂ¸r && extractedInfo?.forsinkelse && extractedInfo?.billetpris;
+  const autoCount = ["fra","til","dato","tidspunkt","operatør","billetpris"].filter(k => autoFilled(k)).length;
+  const selectedDelay = DELAY_OPTIONS.find(d => d.value === extractedInfo?.forsinkelse);
+  const delayEligible = selectedDelay?.eligible !== false;
+  const canProceed = extractedInfo?.fra && extractedInfo?.til && extractedInfo?.operatør && extractedInfo?.forsinkelse && delayEligible && extractedInfo?.billetpris;
 
   return (
     <div>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: 400 }}>
-        BekrÃÂ¦ft rejsedetaljer
+        Bekræft rejsedetaljer
       </h2>
-
       {autoCount > 0 ? (
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(76,175,122,0.08)", border: "1px solid rgba(76,175,122,0.25)", borderRadius: 8, padding: "10px 14px", marginBottom: 24 }}>
-          <span style={{ fontSize: 18 }}>Ã¢ÂÂ</span>
+          <span style={{ fontSize: 18 }}>✅</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#4CAF7A" }}>
-            Vi lÃÂ¦ste <strong>{autoCount} felter</strong> automatisk fra din billet Ã¢ÂÂ tjek og ret hvis nÃÂ¸dvendigt
+            Vi læste <strong>{autoCount} felter</strong> automatisk fra din billet — tjek og ret hvis nødvendigt
           </span>
         </div>
       ) : (
         <p style={{ color: "#6a6a8a", fontSize: 14, marginBottom: 24, fontFamily: "'DM Mono', monospace" }}>
-          Vi kunne ikke lÃÂ¦se billetten Ã¢ÂÂ udfyld manuelt
+          Vi kunne ikke læse billetten — udfyld manuelt
         </p>
       )}
-
       <div style={{ display: "grid", gap: 14 }}>
-        {/* Fra / Til side by side */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {[{ label: "Fra", key: "fra", placeholder: "Afgangsstation" }, { label: "Til", key: "til", placeholder: "Destinationsstation" }].map(({ label, key, placeholder }) => (
             <div key={key}>
@@ -318,8 +278,6 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
             </div>
           ))}
         </div>
-
-        {/* Dato / Tidspunkt side by side */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {[{ label: "Dato", key: "dato", placeholder: "DD.MM.YYYY" }, { label: "Afgang", key: "tidspunkt", placeholder: "HH:MM" }].map(({ label, key, placeholder }) => (
             <div key={key}>
@@ -331,20 +289,16 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
             </div>
           ))}
         </div>
-
-        {/* OperatÃÂ¸r */}
         <div>
           <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-            JernbaneoperatÃÂ¸r
-            {autoFilled("operatÃÂ¸r") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
+            Jernbaneoperatør
+            {autoFilled("operatør") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
           </label>
-          <select value={extractedInfo?.operatÃÂ¸r || ""} onChange={e => update("operatÃÂ¸r", e.target.value)} style={{ ...fieldStyle("operatÃÂ¸r"), color: extractedInfo?.operatÃÂ¸r ? "#e8e0d0" : "#4a4a6a" }}>
-            <option value="">VÃÂ¦lg operatÃÂ¸r...</option>
+          <select value={extractedInfo?.operatør || ""} onChange={e => update("operatør", e.target.value)} style={{ ...fieldStyle("operatør"), color: extractedInfo?.operatør ? "#e8e0d0" : "#4a4a6a" }}>
+            <option value="">Vælg operatør...</option>
             {operators.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
         </div>
-
-        {/* Pris / Valuta */}
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>
           <div>
             <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
@@ -360,30 +314,45 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
             </select>
           </div>
         </div>
-
-        {/* Forsinkelse */}
         <div>
-          <label style={{ display: "block", color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 8, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+          <label style={{ display: "block", color: "#6a6a8a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 4, letterSpacing: "0.12em", textTransform: "uppercase" }}>
             Hvad var forsinkelsen? <span style={{ color: "#CC4444", fontSize: 10 }}>*</span>
           </label>
+          <div style={{ color: "#4a4a6a", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+            Måles fra planlagt ankomsttid til faktisk ankomst ved endestation
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {DELAY_OPTIONS.map(d => (
-              <button key={d} onClick={() => update("forsinkelse", d)} style={{
+              <button key={d.value} onClick={() => update("forsinkelse", d.value)} style={{
                 padding: "12px 8px", borderRadius: 8, cursor: "pointer",
-                background: extractedInfo?.forsinkelse === d ? "rgba(200,169,110,0.15)" : "#111128",
-                border: `1px solid ${extractedInfo?.forsinkelse === d ? "#C8A96E" : "#2d2d4e"}`,
-                color: extractedInfo?.forsinkelse === d ? "#C8A96E" : "#6a6a8a",
-                fontFamily: "'DM Mono', monospace", fontSize: 12, transition: "all 0.15s ease",
-                fontWeight: extractedInfo?.forsinkelse === d ? 700 : 400
-              }}>{d}</button>
+                background: extractedInfo?.forsinkelse === d.value
+                  ? (d.eligible ? "rgba(200,169,110,0.15)" : "rgba(255,107,107,0.1)")
+                  : "#111128",
+                border: `1px solid ${extractedInfo?.forsinkelse === d.value
+                  ? (d.eligible ? "#C8A96E" : "#CC4444")
+                  : "#2d2d4e"}`,
+                color: extractedInfo?.forsinkelse === d.value
+                  ? (d.eligible ? "#C8A96E" : "#ff6b6b")
+                  : "#6a6a8a",
+                fontFamily: "'DM Mono', monospace", fontSize: 11, transition: "all 0.15s ease",
+                fontWeight: extractedInfo?.forsinkelse === d.value ? 700 : 400,
+                textAlign: "center"
+              }}>
+                <div>{d.label}</div>
+                <div style={{ fontSize: 9, marginTop: 3, opacity: 0.8 }}>{d.refund}</div>
+              </button>
             ))}
           </div>
+          {extractedInfo?.forsinkelse === "under-60 min" && (
+            <div style={{ color: "#ff6b6b", fontSize: 11, marginTop: 8, fontFamily: "'DM Mono', monospace", background: "rgba(255,107,107,0.08)", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 6, padding: "8px 10px" }}>
+              ❌ Under 60 minutters forsinkelse giver ikke ret til kompensation under EU-forordning 2021/782, Art. 19
+            </div>
+          )}
         </div>
       </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 24 }}>
         <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #2d2d4e", borderRadius: 8, color: "#6a6a8a", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
-          Ã¢ÂÂ Tilbage
+          ← Tilbage
         </button>
         <button onClick={onNext} disabled={!canProceed} style={{
           padding: "14px", background: canProceed ? "#C8A96E" : "#1a1a2e",
@@ -391,7 +360,7 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
           cursor: canProceed ? "pointer" : "not-allowed",
           fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, transition: "all 0.2s ease"
         }}>
-          Beregn kompensation Ã¢ÂÂ
+          Beregn kompensation →
         </button>
       </div>
     </div>
@@ -399,53 +368,49 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
 }
 
 function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
-  const op = OPERATORS[extractedInfo?.operatÃÂ¸r];
-  const delayMap = { "30-59 min": 45, "60-119 min": 90, "120+ min": 150 };
+  const op = OPERATORS[extractedInfo?.operatør];
+  const delayMap = { "60-119 min": 90, "120+ min": 150 };
   const delayMinutes = delayMap[extractedInfo?.forsinkelse] || 0;
   const price = parseFloat(extractedInfo?.billetpris) || 0;
-
   let rate = 0;
   let eligible = false;
   let reason = "";
 
   if (!op) {
-    reason = "OperatÃÂ¸r ikke fundet";
+    reason = "Operatør ikke fundet";
   } else if (delayMinutes < op.threshold) {
-    reason = `Forsinkelse under ${op.threshold} min Ã¢ÂÂ ikke berettiget`;
+    reason = `Forsinkelse under ${op.threshold} min — ikke berettiget`;
   } else if (delayMinutes >= 120) {
-    rate = 1.0; eligible = true;
+    rate = 0.5; eligible = true;
   } else if (delayMinutes >= 60) {
-    rate = op.rate; eligible = true;
+    rate = 0.25; eligible = true;
   }
 
   const compensation = price * rate;
   const ourFee = compensation * 0.25;
   const youGet = compensation - ourFee;
-
   const currency = extractedInfo?.valuta || "DKK";
 
   useEffect(() => {
     if (eligible) setCompensation({ compensation, ourFee, youGet, currency, op });
-  }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operatÃÂ¸r]);
+  }, [extractedInfo?.forsinkelse, extractedInfo?.billetpris, extractedInfo?.operatør]);
 
   return (
     <div>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: 400 }}>
         Vurdering
       </h2>
-
       <div style={{
         background: eligible ? "rgba(76,175,122,0.08)" : "rgba(255,107,107,0.08)",
         border: `1px solid ${eligible ? "rgba(76,175,122,0.3)" : "rgba(255,107,107,0.3)"}`,
         borderRadius: 12, padding: 24, marginBottom: 24
       }}>
-        <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "Ã¢ÂÂ" : "Ã¢ÂÂ"}</div>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "✅" : "❌"}</div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#4CAF7A" : "#ff6b6b", marginBottom: 4 }}>
           {eligible ? "Du er berettiget til kompensation" : "Ikke berettiget"}
         </div>
         {!eligible && <div style={{ color: "#6a6a8a", fontSize: 13, fontFamily: "'DM Mono', monospace" }}>{reason}</div>}
       </div>
-
       {eligible && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
@@ -464,7 +429,6 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
               </div>
             ))}
           </div>
-
           <div style={{ background: "#111128", border: "1px solid #2d2d4e", borderRadius: 10, padding: 16, marginBottom: 24 }}>
             <div style={{ color: "#6a6a8a", fontSize: 11, fontFamily: "'DM Mono', monospace", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>Klageinstans</div>
             <div style={{ color: "#e8e0d0", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>{op?.authority}</div>
@@ -472,10 +436,9 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
           </div>
         </>
       )}
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
         <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #2d2d4e", borderRadius: 8, color: "#6a6a8a", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
-          Ã¢ÂÂ Tilbage
+          ← Tilbage
         </button>
         {eligible && (
           <button onClick={onNext} style={{
@@ -483,7 +446,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
             border: "none", borderRadius: 8, cursor: "pointer",
             fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700
           }}>
-            GenerÃÂ©r klageskema Ã¢ÂÂ
+            Generér klageskema →
           </button>
         )}
       </div>
@@ -491,9 +454,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   );
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Pure JS PDF builder (no external CDN) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function buildPdf(pages) {
-  // Minimal PDF-1.4 builder Ã¢ÂÂ text + rectangles + lines only
   const enc = s => {
     let out = '';
     for (let i = 0; i < s.length; i++) {
@@ -506,21 +467,15 @@ function buildPdf(pages) {
     }
     return out;
   };
-
   const objs = [];
   const addObj = (content) => { objs.push(content); return objs.length; };
-
-  // Catalog + Pages placeholder (filled later)
-  const catalogIdx = addObj(''); 
+  const catalogIdx = addObj('');
   const pagesIdx   = addObj('');
-
   const pageIdxs = [];
   const streamIdxs = [];
-
   for (const pg of pages) {
     const W = pg.W || 595, H = pg.H || 842;
     const ops = [];
-
     for (const cmd of pg.cmds) {
       if (cmd.type === 'fillRect') {
         const [r,g,b] = cmd.color || [0,0,0];
@@ -547,23 +502,16 @@ function buildPdf(pages) {
         ops.push(`ET`);
       }
     }
-
     const stream = ops.join('\n');
     const streamIdx = addObj(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
     streamIdxs.push(streamIdx);
-
     const pageIdx = addObj(`<< /Type /Page /Parent ${pagesIdx} 0 R /MediaBox [0 0 ${W} ${H}] /Contents ${streamIdx} 0 R /Resources << /Font << /F1 ${objs.length+1} 0 R /F2 ${objs.length+2} 0 R >> >> >>`);
     pageIdxs.push(pageIdx);
-
     addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
     addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
   }
-
-  // Fill pages obj
   objs[pagesIdx-1] = `<< /Type /Pages /Kids [${pageIdxs.map(i=>i+' 0 R').join(' ')}] /Count ${pageIdxs.length} >>`;
   objs[catalogIdx-1] = `<< /Type /Catalog /Pages ${pagesIdx} 0 R >>`;
-
-  // Build xref
   let body = '%PDF-1.4\n';
   const offsets = [];
   for (let i = 0; i < objs.length; i++) {
@@ -574,8 +522,6 @@ function buildPdf(pages) {
   body += `xref\n0 ${objs.length+1}\n0000000000 65535 f \n`;
   for (const off of offsets) body += `${String(off).padStart(10,'0')} 00000 n \n`;
   body += `trailer\n<< /Size ${objs.length+1} /Root ${catalogIdx} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-
-  // Convert to Uint8Array
   const arr = new Uint8Array(body.length);
   for (let i = 0; i < body.length; i++) arr[i] = body.charCodeAt(i) & 0xff;
   return arr;
@@ -595,15 +541,13 @@ function wrapText(text, maxChars) {
 function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   const W=595, H=842, m=48;
   const blue=[0.10,0.18,0.45], dark=[0.08,0.08,0.08], mid=[0.45,0.45,0.45];
-  const lite=[0.93,0.93,0.93], gold=[1.0,0.85,0.0], white=[1,1,1], red=[0.8,0.0,0.0];
+  const lite=[0.93,0.93,0.93], gold=[1.0,0.85,0.0], white=[1,1,1];
   const cmds = [];
-
   const fillRect=(x,y,w,h,color)=>cmds.push({type:'fillRect',x,y,w,h,color});
   const strokeRect=(x,y,w,h,color,lw)=>cmds.push({type:'strokeRect',x,y,w,h,color,lw});
   const line=(x1,y1,x2,y2,color,lw)=>cmds.push({type:'line',x1,y1,x2,y2,color,lw});
   const text=(t,x,y,size,color,bold)=>cmds.push({type:'text',text:t,x,y,size,color,bold});
 
-  // HEADER
   fillRect(0,H-50,W,50,blue);
   text('EUROPEAN UNION',m,H-15,7,white,true);
   text('Commission Implementing Regulation (EU) 2024/949 of 27 March 2024',m,H-26,6.5,[0.75,0.82,1]);
@@ -617,20 +561,16 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
     y-=22;
   };
 
-  // S1: CLAIM TYPE
   section('1.  TYPE OF CLAIM - Place a cross [X] in the applicable box');
   text('Reimbursement due to cancellation:',m,y+1,8,dark);
-  strokeRect(m+170,y-1,9,9,dark,0.6); // unchecked
+  strokeRect(m+170,y-1,9,9,dark,0.6);
   text('Compensation for delay (Art. 19 Reg. EU 2021/782):',m+230,y+1,8,dark);
-  strokeRect(m+440,y-1,9,9,dark,0.6); fillRect(m+441,y,7,7,blue); text('X',m+442,y+1,7,white,true); // checked
+  strokeRect(m+440,y-1,9,9,dark,0.6); fillRect(m+441,y,7,7,blue); text('X',m+442,y+1,7,white,true);
   y-=15;
-  text('Continuation / re-routing:',m,y+1,8,dark);
-  strokeRect(m+130,y-1,9,9,dark,0.6);
-  text('Meals / refreshments:',m+230,y+1,8,dark);
-  strokeRect(m+335,y-1,9,9,dark,0.6);
+  text('Continuation / re-routing:',m,y+1,8,dark); strokeRect(m+130,y-1,9,9,dark,0.6);
+  text('Meals / refreshments:',m+230,y+1,8,dark); strokeRect(m+335,y-1,9,9,dark,0.6);
   y-=20;
 
-  // S2: JOURNEY
   section('2.  JOURNEY DETAILS');
   const hw=(W-m*2-8)/2;
   const fld=(label,val,fx,fy,fw)=>{
@@ -638,31 +578,33 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
     fillRect(fx,fy,fw,13,lite);
     text(val||'',fx+3,fy+3,8.5,dark);
   };
+
   fld('Station of departure',info.fra,m,y,hw);
   fld('Station of destination',info.til,m+hw+8,y,hw);
   y-=26;
   fld('Date of travel (DD/MM/YYYY)',info.dato,m,y,hw);
   fld('Scheduled departure time',info.tidspunkt,m+hw+8,y,hw);
   y-=26;
-  fld('Railway undertaking (operator)',info.operatÃÂ¸r||'',m,y,hw);
+  fld('Railway undertaking (operator)',info.operatør||'',m,y,hw);
   fld('Train number (if known)','',m+hw+8,y,hw);
   y-=26;
+
   text('Delay at final destination:',m,y+1,8,dark);
-  const dOpts=['< 60 min','60-119 min','>= 120 min'];
-  const dChk=[info.forsinkelse==='30-59 min',info.forsinkelse==='60-119 min',info.forsinkelse==='120+ min'];
+  const dOpts=['60-119 min','>= 120 min'];
+  const dChk=[info.forsinkelse==='60-119 min',info.forsinkelse==='120+ min'];
   let dx=m+145;
   dOpts.forEach((d,i)=>{
     strokeRect(dx,y-1,9,9,dark,0.6);
     if(dChk[i]){fillRect(dx+1,y,7,7,blue);text('X',dx+1.5,y+1,7,white,true);}
     text(d,dx+12,y+1,8,dark);
-    dx+=80;
+    dx+=90;
   });
   y-=26;
+
   fld('Ticket price',info.billetpris+' '+info.valuta,m,y,hw);
   fld('Compensation claimed (Art.19)',comp.compensation.toFixed(2)+' '+info.valuta,m+hw+8,y,hw);
   y-=30;
 
-  // S3: PASSENGER
   section('3.  PASSENGER DETAILS');
   fld('Full name',name,m,y,W-m*2); y-=26;
   fld('Address',address||'',m,y,W-m*2); y-=26;
@@ -670,7 +612,6 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   fld('Phone (optional)','',m+hw+8,y,hw); y-=26;
   fld('IBAN (for bank transfer)',iban||'',m,y,W-m*2); y-=30;
 
-  // S4: PREVIOUS
   section('4.  PREVIOUS REQUEST');
   text('Have you already submitted a request to the railway undertaking?',m,y+1,8,dark);
   strokeRect(m+278,y-1,9,9,dark,0.6); text('Yes',m+290,y+1,8,dark);
@@ -678,7 +619,6 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   text('No',m+327,y+1,8,dark);
   y-=22;
 
-  // S5: DOCUMENTS
   section('5.  SUPPORTING DOCUMENTS ENCLOSED');
   [['Original ticket / booking confirmation',true],['Proof of delay (station stamp, screenshot)',false],['Proof of costs for alternative transport',false]].forEach(([label,chk])=>{
     strokeRect(m,y-1,9,9,dark,0.6);
@@ -688,11 +628,11 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   });
   y-=8;
 
-  // S6: SIGNATURE
   section('6.  DECLARATION AND SIGNATURE');
   const decl='I hereby acknowledge that the recipient may share my personal data with other relevant parties if required for processing. I declare that all information provided is true and accurate.';
   wrapText(decl,104).forEach(l=>{text(l,m,y,7.5,mid);y-=11;});
   y-=6;
+
   strokeRect(m,y-33,220,41,[0.6,0.6,0.6],0.8);
   text(name,m+6,y-18,13,blue,true);
   text('(digital signature - EU 2024/949)',m+6,y-30,6.5,mid);
@@ -701,13 +641,11 @@ function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   fld('Place','Denmark',m+230,y-40,120);
   y-=58;
 
-  // SUBMIT
   line(m,y,W-m,y,[0.6,0.6,0.6],0.8); y-=13;
-  text('SUBMIT TO: '+( info.operatÃÂ¸r||'')+'  -  '+(comp.op.authority)+'  -  '+(comp.op.url),m,y,7.5,blue,true);
+  text('SUBMIT TO: '+(info.operatør||'')+'  -  '+(comp.op.authority)+'  -  '+(comp.op.url),m,y,7.5,blue,true);
   y-=13;
   text('This form may be submitted electronically or on paper to any EU railway undertaking (Reg. EU 2021/782).',m,y,7,mid);
 
-  // FOOTER
   fillRect(0,0,W,20,blue);
   text('Commission Implementing Reg. (EU) 2024/949  -  Reg. (EU) 2021/782 on rail passengers rights',m,6,6.5,[0.75,0.82,1]);
   text('Generated: '+new Date().toLocaleDateString('da-DK'),W-130,6,6.5,[0.75,0.82,1]);
@@ -720,7 +658,6 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   const blue=[0.10,0.18,0.45], dark=[0.08,0.08,0.08], mid=[0.45,0.45,0.45];
   const lite=[0.93,0.93,0.93], gold=[1.0,0.85,0.0], white=[1,1,1];
   const cmds=[];
-
   const fillRect=(x,y,w,h,color)=>cmds.push({type:'fillRect',x,y,w,h,color});
   const strokeRect=(x,y,w,h,color,lw)=>cmds.push({type:'strokeRect',x,y,w,h,color,lw});
   const line=(x1,y1,x2,y2,color,lw)=>cmds.push({type:'line',x1,y1,x2,y2,color,lw});
@@ -731,7 +668,6 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
     return y;
   };
 
-  // HEADER
   fillRect(0,H-70,W,70,blue);
   text('FULDMAGT',m,H-28,24,white,true);
   text('Power of Attorney - Togkompensationskrav',m,H-48,11,[0.75,0.82,1]);
@@ -739,11 +675,9 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   for(let i=0;i<12;i++){const a=(i/12)*Math.PI*2;text('*',W-66+Math.cos(a)*14,H-36+Math.sin(a)*14,7,gold);}
 
   let y=H-96;
-
-  // UNDERTEGNEDE
   fillRect(m-12,y-58,W-m*2+24,72,[0.96,0.97,1]);
   text('UNDERTEGNEDE - FULDMAGTSGIVER',m,y,8.5,mid,true); y-=18;
-  text('Navn:',m,y,10,dark,true); text(name,m+50,y,10,dark);  y-=16;
+  text('Navn:',m,y,10,dark,true); text(name,m+50,y,10,dark); y-=16;
   text('Adresse:',m,y,10,dark,true); text(address||'-',m+60,y,10,dark); y-=16;
   text('Email:',m,y,10,dark,true); text(email,m+45,y,10,dark); y-=26;
 
@@ -753,7 +687,6 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   text('Til at handle pa undertegnedes vegne i forbindelse med nedenstaaende togkompensationskrav.',m,y,9.5,dark);
   y-=36;
 
-  // REJSEDETALJER
   fillRect(m-12,y-78,W-m*2+24,90,[0.97,0.98,1]);
   fillRect(m-12,y+6,W-m*2+24,16,blue);
   text('KRAVETS REJSEDETALJER',m,y+10,8,white,true); y-=16;
@@ -761,11 +694,10 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   text('Til: '+info.til,m+240,y,9.5,dark,true); y-=15;
   text('Dato: '+info.dato,m,y,9.5,dark);
   text('Forsinkelse: '+info.forsinkelse,m+140,y,9.5,dark); y-=15;
-  text('Operatoer: '+(info.operatÃÂ¸r||''),m,y,9.5,dark); y-=15;
+  text('Operatoer: '+(info.operatør||''),m,y,9.5,dark); y-=15;
   text('Kompensationskrav: '+comp.compensation.toFixed(2)+' '+info.valuta+' (jf. EU 2021/782, Art. 19)',m,y,9.5,blue,true);
   y-=32;
 
-  // OMFANG
   text('FULDMAGTENS OMFANG',m,y,9,mid,true); y-=16;
   const items=[
     'At indgive og underskrive den officielle EU-blanket (Forordning EU 2024/949) pa vegne af fuldmagtsgiver.',
@@ -779,16 +711,13 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   });
   y-=8;
 
-  // HONORAR
   fillRect(m-12,y-26,W-m*2+24,40,[1,0.97,0.89]);
   text('HONORAR:',m,y+8,9,[0.55,0.28,0],true);
   text('25% af opnaet kompensation. Ingen betaling ved afvisning af klagen.',m,y-6,9.5,dark);
   y-=42;
 
-  // GDPR
   y=wdraw('GDPR: Personoplysninger behandles iht. Forordning (EU) 2016/679 og anvendes udelukkende til behandling af dette krav.',m,y,W-m*2,8.5,mid,false,13)-12;
 
-  // UNDERSKRIFT
   text('UNDERSKRIFT / SIGNATURE',m,y,9,mid,true); y-=18;
   strokeRect(m,y-40,220,48,[0.6,0.6,0.6],0.8);
   text(name,m+8,y-22,15,blue,true);
@@ -797,7 +726,6 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
   text('Dato: '+new Date().toLocaleDateString('da-DK'),m+250,y-14,10,dark);
   text('Sted: Danmark',m+250,y-32,10,dark);
 
-  // FOOTER
   fillRect(0,0,W,22,blue);
   text('Fuldmagt til EU Rail Refund ApS  -  Jf. Forordning (EU) 2021/782 og 2024/949',m,7,6.5,[0.75,0.82,1]);
 
@@ -805,7 +733,6 @@ function generateFuldmagtPdf({ info, comp, name, email, address }) {
 }
 
 function downloadPdf(bytes, filename) {
-  // Convert to base64 data URI Ã¢ÂÂ avoids Blob/createObjectURL sandbox restrictions
   let binary = '';
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   const b64 = btoa(binary);
@@ -826,65 +753,47 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   const [swift, setSwift] = useState("");
   const [ibanValidation, setIbanValidation] = useState({ valid: false, error: null, country: "", suggestedBic: "" });
   const [agreed, setAgreed] = useState(false);
+  const [gdprConsent, setGdprConsent] = useState(false);
   const [signInput, setSignInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const ticketName = extractedInfo?.passagernavn || null;
+  const nameMismatch = ticketName && name.trim().length > 2 &&
+    ticketName.trim().toLowerCase() !== name.trim().toLowerCase() &&
+    !ticketName.trim().toLowerCase().includes(name.trim().toLowerCase().split(" ")[0]) &&
+    !name.trim().toLowerCase().includes(ticketName.trim().toLowerCase().split(" ")[0]);
+
   const mono = "'DM Mono', monospace";
   const inp = { width:"100%", padding:"11px 13px", background:"#111128", border:"1px solid #2d2d4e", borderRadius:8, color:"#e8e0d0", fontFamily:mono, fontSize:13, outline:"none", boxSizing:"border-box" };
   const signed = signInput.trim().toLowerCase() === name.trim().toLowerCase() && name.trim().length > 0;
-  const canGo = name.trim() && email.trim() && address.trim() && iban.trim() && ibanValidation.valid && agreed;
+  const canGo = name.trim() && email.trim() && address.trim() && iban.trim() && ibanValidation.valid && agreed && gdprConsent;
 
   const doGenerate = async () => {
     setLoading(true); setError("");
     try {
-      const res = await fetch("/api/generate-pdfs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          info: {
-            fra: extractedInfo.fra,
-            til: extractedInfo.til,
-            dato: extractedInfo.dato,
-            tidspunkt: extractedInfo.tidspunkt,
-            forsinkelse: extractedInfo.forsinkelse,
-            operatoer: extractedInfo.operatÃÂ¸r || "",
-            billetpris: extractedInfo.billetpris,
-            valuta: extractedInfo.valuta || "DKK",
-          },
-          comp: {
-            compensation: compensation.compensation,
-            authority: compensation.op.authority,
-            url: compensation.op.url,
-          },
-          person: {
-            navn: name,
-            email: email,
-            adresse: address,
-            iban: iban,
-            swift: swift,
-            dato_signed: new Date().toLocaleDateString("da-DK"),
-          }
-        })
+      const euBytes = generateEUFormPdf({
+        info: {
+          fra: extractedInfo.fra, til: extractedInfo.til, dato: extractedInfo.dato,
+          tidspunkt: extractedInfo.tidspunkt, forsinkelse: extractedInfo.forsinkelse,
+          operatør: extractedInfo.operatør || "", billetpris: extractedInfo.billetpris,
+          valuta: extractedInfo.valuta || "DKK",
+        },
+        comp: compensation, name, email, address, iban
       });
-      if (!res.ok) throw new Error("Server fejl: " + res.status);
-      const data = await res.json();
-      // Download both PDFs from base64
-      const dl = (b64, filename) => {
-        const byteStr = atob(b64);
-        const arr = new Uint8Array(byteStr.length);
-        for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
-        const blob = new Blob([arr], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url; a.download = filename; a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-      };
-      dl(data.eu, "EU-blanket-togkompensation.pdf");
-      setTimeout(() => dl(data.fuldmagt, "Fuldmagt-EU-Rail-Refund.pdf"), 800);
+      const fuldmagtBytes = generateFuldmagtPdf({
+        info: {
+          fra: extractedInfo.fra, til: extractedInfo.til, dato: extractedInfo.dato,
+          forsinkelse: extractedInfo.forsinkelse, operatør: extractedInfo.operatør || "",
+          billetpris: extractedInfo.billetpris, valuta: extractedInfo.valuta || "DKK",
+        },
+        comp: compensation, name, email, address
+      });
+      downloadPdf(euBytes, "EU-blanket-togkompensation.pdf");
+      setTimeout(() => downloadPdf(fuldmagtBytes, "Fuldmagt-EU-Rail-Refund.pdf"), 800);
       setSubStep("done");
     } catch(e) {
-      setError("Fejl: " + e.message);
+      setError("Fejl ved generering: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -900,20 +809,26 @@ function FormStep({ extractedInfo, compensation, onBack }) {
     <div>
       <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#e8e0d0", marginBottom:6, fontWeight:400 }}>Dine oplysninger</h2>
       <p style={{ color:"#6a6a8a", fontSize:13, marginBottom:22, fontFamily:mono }}>Bruges til at udfylde den officielle EU-blanket (2024/949)</p>
-
       <div style={{ display:"grid", gap:14 }}>
         <div>
           <LabelEl>Fulde navn *</LabelEl>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Frederik Hansen" style={inp} />
+          {nameMismatch && (
+            <div style={{ color:"#C8A96E", fontSize:11, marginTop:5, fontFamily:mono, background:"rgba(200,169,110,0.08)", border:"1px solid rgba(200,169,110,0.25)", borderRadius:6, padding:"7px 10px" }}>
+              ⚠ Billetens navn er "<strong>{ticketName}</strong>" — bekræft at dette er dig, eller ret navnet ovenfor
+            </div>
+          )}
+          {ticketName && !nameMismatch && name.trim().length > 2 && (
+            <div style={{ color:"#4CAF7A", fontSize:11, marginTop:4, fontFamily:mono }}>✓ Navn matcher billetten</div>
+          )}
         </div>
-
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <div>
             <LabelEl>Email *</LabelEl>
             <input value={email} onChange={e => setEmail(e.target.value)} placeholder="din@email.dk" type="email" style={inp} />
           </div>
           <div>
-            <LabelEl>IBAN (for payout) *</LabelEl>
+            <LabelEl>IBAN — kun EU/EØS *</LabelEl>
             <input
               value={iban}
               onChange={e => {
@@ -921,99 +836,84 @@ function FormStep({ extractedInfo, compensation, onBack }) {
                 setIban(val);
                 const result = validateIBAN(val);
                 setIbanValidation(result);
-                if (result.valid && result.suggestedBic && !swift.trim()) {
-                  setSwift(result.suggestedBic);
-                }
+                if (result.valid && result.suggestedBic && !swift.trim()) setSwift(result.suggestedBic);
               }}
               placeholder="DK50 0040 0440 1162 43"
-              style={{
-                ...inp,
-                borderColor: iban.length > 4
-                  ? (ibanValidation.valid ? "#4CAF7A" : "#CC4444")
-                  : "#2d2d4e",
-              }}
+              style={{ ...inp, borderColor: iban.length > 4 ? (ibanValidation.valid ? "#4CAF7A" : "#CC4444") : "#2d2d4e" }}
             />
             {iban.length > 4 && !ibanValidation.valid && ibanValidation.error && (
-              <div style={{ color:"#CC4444", fontSize:11, marginTop:4, fontFamily:mono }}>
-                â ï¸ {ibanValidation.error}
-              </div>
+              <div style={{ color:"#CC4444", fontSize:11, marginTop:4, fontFamily:mono }}>✗ {ibanValidation.error}</div>
             )}
             {ibanValidation.valid && (
-              <div style={{ color:"#4CAF7A", fontSize:11, marginTop:4, fontFamily:mono }}>
-                â Valid IBAN{ibanValidation.country ? " Â· " + ibanValidation.country : ""}
-              </div>
+              <div style={{ color:"#4CAF7A", fontSize:11, marginTop:4, fontFamily:mono }}>✓ Gyldig IBAN{ibanValidation.country ? " — " + ibanValidation.country : ""}</div>
             )}
           </div>
         </div>
-
-
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <div>
             <LabelEl>SWIFT/BIC *</LabelEl>
-            <input
-              value={swift}
-              onChange={e => setSwift(e.target.value)}
-              placeholder={ibanValidation.suggestedBic || "DABADKKK"}
-              style={{ ...inp, borderColor: swift.trim().length >= 8 ? "#4CAF7A" : "#2d2d4e" }}
-            />
+            <input value={swift} onChange={e => setSwift(e.target.value)} placeholder={ibanValidation.suggestedBic || "DABADKKK"}
+              style={{ ...inp, borderColor: swift.trim().length >= 8 ? "#4CAF7A" : "#2d2d4e" }} />
             {ibanValidation.valid && !swift.trim() && (
-              <div style={{ color:"#CC4444", fontSize:11, marginTop:4, fontFamily:mono }}>
-                Required for wire transfer
-              </div>
+              <div style={{ color:"#CC4444", fontSize:11, marginTop:4, fontFamily:mono }}>Påkrævet til bankoverførsel</div>
             )}
             {ibanValidation.suggestedBic && !swift.trim() && (
               <button type="button" onClick={() => setSwift(ibanValidation.suggestedBic)}
-                style={{ background:"none", border:"none", color:"#C8A96E", fontSize:11, cursor:"pointer", fontFamily:mono, padding:"4px 0", textDecoration:"underline" }}
-              >
-                Use suggested: {ibanValidation.suggestedBic}
+                style={{ background:"none", border:"none", color:"#C8A96E", fontSize:11, cursor:"pointer", fontFamily:mono, padding:"4px 0", textDecoration:"underline" }}>
+                Brug foreslået: {ibanValidation.suggestedBic}
               </button>
             )}
           </div>
           <div>
             <LabelEl>Adresse *</LabelEl>
-            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Strandvejen 1, 2100 Kobenhavn O" style={inp} />
+            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Strandvejen 1, 2100 København Ø" style={inp} />
           </div>
         </div>
-
         <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px" }}>
           <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10, letterSpacing:"0.08em" }}>VI GENERERER 2 DOKUMENTER</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
             <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}>
-              <div style={{ fontSize:20, marginBottom:4 }}>Ã°ÂÂÂ</div>
+              <div style={{ fontSize:20, marginBottom:4 }}>📄</div>
               <div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>EU-blanket 2024/949</div>
               <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Officiel EU-formular, auto-udfyldt</div>
             </div>
             <div style={{ background:"#111128", borderRadius:8, padding:"10px 12px" }}>
-              <div style={{ fontSize:20, marginBottom:4 }}>Ã¢ÂÂÃ¯Â¸Â</div>
+              <div style={{ fontSize:20, marginBottom:4 }}>✍️</div>
               <div style={{ fontFamily:mono, fontSize:11, color:"#e8e0d0", fontWeight:700 }}>Fuldmagt</div>
               <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:3 }}>Bemyndiger os til at indsende</div>
             </div>
           </div>
         </div>
-
-        <div
-          onClick={() => setAgreed(a => !a)}
-          style={{ display:"flex", gap:10, cursor:"pointer", alignItems:"flex-start", padding:"12px", background: agreed ? "rgba(76,175,122,0.07)" : "#111128", border:`1px solid ${agreed ? "rgba(76,175,122,0.4)" : "#2d2d4e"}`, borderRadius:8, transition:"all 0.2s" }}
-        >
-          <div style={{ width:16, height:16, border:`2px solid ${agreed ? "#4CAF7A" : "#4a4a6a"}`, borderRadius:3, background: agreed ? "#4CAF7A" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {agreed && <span style={{ color:"white", fontSize:10, fontWeight:700 }}>Ã¢ÂÂ</span>}
+        <div onClick={() => setGdprConsent(a => !a)}
+          style={{ display:"flex", gap:10, cursor:"pointer", alignItems:"flex-start", padding:"12px",
+            background: gdprConsent ? "rgba(76,175,122,0.07)" : "#111128",
+            border: `1px solid ${gdprConsent ? "rgba(76,175,122,0.4)" : "#2d2d4e"}`,
+            borderRadius:8, transition:"all 0.2s" }}>
+          <div style={{ width:16, height:16, border: `2px solid ${gdprConsent ? "#4CAF7A" : "#4a4a6a"}`, borderRadius:3, background: gdprConsent ? "#4CAF7A" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {gdprConsent && <span style={{ color:"white", fontSize:10, fontWeight:700 }}>✓</span>}
           </div>
           <span style={{ fontFamily:mono, fontSize:11, color:"#8a8aaa", lineHeight:1.6 }}>
-            Jeg giver EU Rail Refund ApS fuldmagt til at indgive klagen paa mine vegne og accepterer 25% honorar. Ingen betaling ved afvisning.
+            🔒 <strong style={{ color:"#e8e0d0" }}>GDPR-samtykke:</strong> Jeg accepterer at mine personoplysninger (navn, e-mail, adresse, IBAN og billet) behandles af EU Rail Refund ApS udelukkende med henblik på behandling af dette krav, jf. EU-forordning 2016/679 (GDPR). Data slettes inden for 90 dage efter afslutning.
+          </span>
+        </div>
+        <div onClick={() => setAgreed(a => !a)}
+          style={{ display:"flex", gap:10, cursor:"pointer", alignItems:"flex-start", padding:"12px",
+            background: agreed ? "rgba(76,175,122,0.07)" : "#111128",
+            border: `1px solid ${agreed ? "rgba(76,175,122,0.4)" : "#2d2d4e"}`,
+            borderRadius:8, transition:"all 0.2s" }}>
+          <div style={{ width:16, height:16, border: `2px solid ${agreed ? "#4CAF7A" : "#4a4a6a"}`, borderRadius:3, background: agreed ? "#4CAF7A" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {agreed && <span style={{ color:"white", fontSize:10, fontWeight:700 }}>✓</span>}
+          </div>
+          <span style={{ fontFamily:mono, fontSize:11, color:"#8a8aaa", lineHeight:1.6 }}>
+            ✅ Jeg bekræfter at jeg er den navngivne passager på billetten, og giver EU Rail Refund ApS fuldmagt til at indgive klagen på mine vegne. Jeg accepterer 25% honorar ved succes — ingen betaling ved afvisning.
           </span>
         </div>
       </div>
-
       <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:12, marginTop:20 }}>
-        <button onClick={onBack} style={{ padding:"13px", background:"transparent", border:"1px solid #2d2d4e", borderRadius:8, color:"#6a6a8a", cursor:"pointer", fontFamily:mono, fontSize:13 }}>
-          Ã¢ÂÂ Tilbage
-        </button>
-        <button
-          onClick={() => setSubStep("sign")}
-          disabled={!canGo}
-          style={{ padding:"13px", background: canGo ? "#C8A96E" : "#1a1a2e", color: canGo ? "#0a0a1a" : "#3a3a5a", border:"none", borderRadius:8, cursor: canGo ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700, transition:"all 0.2s" }}
-        >
-          Fortsaet til underskrift Ã¢ÂÂ
+        <button onClick={onBack} style={{ padding:"13px", background:"transparent", border:"1px solid #2d2d4e", borderRadius:8, color:"#6a6a8a", cursor:"pointer", fontFamily:mono, fontSize:13 }}>← Tilbage</button>
+        <button onClick={() => setSubStep("sign")} disabled={!canGo}
+          style={{ padding:"13px", background: canGo ? "#C8A96E" : "#1a1a2e", color: canGo ? "#0a0a1a" : "#3a3a5a", border:"none", borderRadius:8, cursor: canGo ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700, transition:"all 0.2s" }}>
+          Fortsæt til underskrift →
         </button>
       </div>
     </div>
@@ -1023,48 +923,35 @@ function FormStep({ extractedInfo, compensation, onBack }) {
     <div>
       <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#e8e0d0", marginBottom:6, fontWeight:400 }}>Digital underskrift</h2>
       <p style={{ color:"#6a6a8a", fontSize:13, marginBottom:20, fontFamily:mono }}>Skriv dit navn for at underskrive begge dokumenter</p>
-
       <div style={{ background:"#0d0d20", border:"1px solid #2d2d4e", borderRadius:10, padding:18, marginBottom:20 }}>
         <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginBottom:12, letterSpacing:"0.1em" }}>DU UNDERSKRIVER</div>
         {[
-          ["Ã°ÂÂÂ EU-blanket (2024/949)", "Kompensationskrav: " + compensation.compensation.toFixed(0) + " " + extractedInfo.valuta],
-          ["Ã¢ÂÂÃ¯Â¸Â Fuldmagt til EU Rail Refund ApS", extractedInfo.fra + " Ã¢ÂÂ " + extractedInfo.til + " ÃÂ· " + extractedInfo.dato],
+          ["📄 EU-blanket (2024/949)", "Kompensationskrav: " + compensation.compensation.toFixed(0) + " " + extractedInfo.valuta],
+          ["✍️ Fuldmagt til EU Rail Refund ApS", extractedInfo.fra + " → " + extractedInfo.til + " · " + extractedInfo.dato],
         ].map(([title, sub]) => (
           <div key={title} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:"1px solid #1a1a2e" }}>
             <div>
               <div style={{ fontFamily:mono, fontSize:12, color:"#e8e0d0" }}>{title}</div>
               <div style={{ fontFamily:mono, fontSize:10, color:"#6a6a8a", marginTop:2 }}>{sub}</div>
             </div>
-            <div style={{ color: signed ? "#4CAF7A" : "#4a4a6a", fontSize:20 }}>{signed ? "Ã¢ÂÂ" : "Ã¢ÂÂ"}</div>
+            <div style={{ color: signed ? "#4CAF7A" : "#4a4a6a", fontSize:20 }}>{signed ? "✓" : "○"}</div>
           </div>
         ))}
       </div>
-
       <div style={{ marginBottom:20 }}>
         <LabelEl>Skriv dit fulde navn som underskrift *</LabelEl>
-        <input
-          value={signInput}
-          onChange={e => setSignInput(e.target.value)}
-          placeholder="Skriv dit fulde navn..."
-          style={{ ...inp, fontSize:16, fontFamily:"'Playfair Display', serif", borderColor: signed ? "rgba(76,175,122,0.5)" : "#2d2d4e", background: signed ? "rgba(76,175,122,0.05)" : "#111128" }}
-        />
+        <input value={signInput} onChange={e => setSignInput(e.target.value)} placeholder="Skriv dit fulde navn..."
+          style={{ ...inp, fontSize:16, fontFamily:"'Playfair Display', serif", borderColor: signed ? "rgba(76,175,122,0.5)" : "#2d2d4e", background: signed ? "rgba(76,175,122,0.05)" : "#111128" }} />
         <div style={{ fontFamily:mono, fontSize:10, color:"#4a4a6a", marginTop:6 }}>
-          Din navneindtastning fungerer som digital underskrift paa begge dokumenter.
+          Din navneindtastning fungerer som digital underskrift på begge dokumenter.
         </div>
       </div>
-
       {error && <div style={{ color:"#ff6b6b", fontFamily:mono, fontSize:12, marginBottom:12 }}>{error}</div>}
-
       <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:12 }}>
-        <button onClick={() => setSubStep("details")} style={{ padding:"13px", background:"transparent", border:"1px solid #2d2d4e", borderRadius:8, color:"#6a6a8a", cursor:"pointer", fontFamily:mono, fontSize:13 }}>
-          Ã¢ÂÂ Tilbage
-        </button>
-        <button
-          onClick={doGenerate}
-          disabled={!signed || loading}
-          style={{ padding:"13px", background: signed && !loading ? "#C8A96E" : "#1a1a2e", color: signed && !loading ? "#0a0a1a" : "#3a3a5a", border:"none", borderRadius:8, cursor: signed ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700 }}
-        >
-          {loading ? "Ã¢ÂÂ³  Genererer PDFer..." : "Ã¢ÂÂÃ¯Â¸Â  Underskriv og download PDF Ã¢ÂÂ"}
+        <button onClick={() => setSubStep("details")} style={{ padding:"13px", background:"transparent", border:"1px solid #2d2d4e", borderRadius:8, color:"#6a6a8a", cursor:"pointer", fontFamily:mono, fontSize:13 }}>← Tilbage</button>
+        <button onClick={doGenerate} disabled={!signed || loading}
+          style={{ padding:"13px", background: signed && !loading ? "#C8A96E" : "#1a1a2e", color: signed && !loading ? "#0a0a1a" : "#3a3a5a", border:"none", borderRadius:8, cursor: signed ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700 }}>
+          {loading ? "⟳  Genererer PDFer..." : "✍️  Underskriv og download PDF →"}
         </button>
       </div>
     </div>
@@ -1072,15 +959,15 @@ function FormStep({ extractedInfo, compensation, onBack }) {
 
   return (
     <div style={{ textAlign:"center", padding:"10px 0" }}>
-      <div style={{ fontSize:52, marginBottom:16 }}>Ã°ÂÂÂ</div>
+      <div style={{ fontSize:52, marginBottom:16 }}>🎉</div>
       <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#e8e0d0", marginBottom:10, fontWeight:400 }}>Dokumenter downloadet!</h2>
       <p style={{ fontFamily:mono, fontSize:13, color:"#6a6a8a", marginBottom:20, lineHeight:1.8 }}>
         2 PDF-filer er downloadet. Send begge til <strong style={{ color:"#C8A96E" }}>{compensation.op.authority}</strong>.
       </p>
       <div style={{ display:"grid", gap:10, textAlign:"left", background:"#111128", borderRadius:10, padding:18, marginBottom:20 }}>
         {[
-          ["Ã°ÂÂÂ EU-blanket-togkompensation.pdf", "Officiel EU 2024/949 formular Ã¢ÂÂ send til operatÃÂ¸ren"],
-          ["Ã¢ÂÂÃ¯Â¸Â Fuldmagt-EU-Rail-Refund.pdf", "Fuldmagt Ã¢ÂÂ vedlaeg til klagen"],
+          ["📄 EU-blanket-togkompensation.pdf", "Officiel EU 2024/949 formular — send til operatøren"],
+          ["✍️ Fuldmagt-EU-Rail-Refund.pdf", "Fuldmagt — vedlæg til klagen"],
         ].map(([file, desc]) => (
           <div key={file}>
             <div style={{ fontFamily:mono, fontSize:12, color:"#e8e0d0" }}>{file}</div>
@@ -1089,11 +976,11 @@ function FormStep({ extractedInfo, compensation, onBack }) {
         ))}
       </div>
       <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left" }}>
-        <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10 }}>NAESTE SKRIDT</div>
+        <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10 }}>NÆSTE SKRIDT</div>
         <div style={{ fontFamily:mono, fontSize:12, color:"#8a8aaa", lineHeight:2 }}>
-          1. Email begge PDF-filer til {extractedInfo.operatÃÂ¸r}<br/>
+          1. Email begge PDF-filer til {extractedInfo.operatør}<br/>
           2. CC: {compensation.op.authority} ({compensation.op.url})<br/>
-          3. OperatÃÂ¸ren har 30 dage til at svare (Reg. EU 2021/782)<br/>
+          3. Operatøren har 30 dage til at svare (Reg. EU 2021/782)<br/>
           4. Vi rykker automatisk hvis ingen svar
         </div>
       </div>
@@ -1101,70 +988,52 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   );
 }
 
-
 export default function App() {
   const [step, setStep] = useState("upload");
   const [ticketData, setTicketData] = useState(null);
   const [extractedInfo, setExtractedInfo] = useState({});
   const [compensation, setCompensation] = useState(null);
-
   const goTo = (s) => setStep(s);
 
   return (
     <div style={{
-      minHeight: "100vh",
-      background: "#0a0a1a",
+      minHeight: "100vh", background: "#0a0a1a",
       backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(200,169,110,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(76,100,175,0.08) 0%, transparent 60%)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "24px 16px", fontFamily: "system-ui",
-      position: "relative", overflow: "hidden"
+      padding: "24px 16px", fontFamily: "system-ui", position: "relative", overflow: "hidden"
     }}>
-      {/* Background rail lines */}
       <div style={{ position: "fixed", inset: 0, opacity: 0.04, pointerEvents: "none" }}>
         {[...Array(8)].map((_, i) => (
           <div key={i} style={{ position: "absolute", left: `${i * 14}%`, top: 0, bottom: 0, width: 1, background: "#C8A96E", transform: `rotate(${i % 2 === 0 ? 5 : -5}deg)` }} />
         ))}
       </div>
-
       <div style={{ width: "100%", maxWidth: 520, position: "relative" }}>
-        {/* Header */}
         <div style={{ marginBottom: 32, textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(200,169,110,0.08)", border: "1px solid rgba(200,169,110,0.2)", borderRadius: 100, padding: "6px 16px", marginBottom: 20 }}>
-            <span style={{ fontSize: 16 }}>Ã°ÂÂÂ</span>
+            <span style={{ fontSize: 16 }}>🚆</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase" }}>EU Rail Refund</span>
           </div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#e8e0d0", margin: 0, fontWeight: 400, lineHeight: 1.2 }}>
-            FÃÂ¥ dine penge<br /><em style={{ color: "#C8A96E" }}>tilbage</em>
+            Få dine penge<br /><em style={{ color: "#C8A96E" }}>tilbage</em>
           </h1>
           <p style={{ color: "#4a4a6a", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
             POWERED BY EU-FORORDNING 1371/2007
           </p>
         </div>
-
-        {/* Card */}
-        <div style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 16, padding: "32px",
-          backdropFilter: "blur(20px)",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.4)"
-        }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "32px", backdropFilter: "blur(20px)", boxShadow: "0 32px 80px rgba(0,0,0,0.4)" }}>
           <ProgressBar step={step} />
-
           {step === "upload" && <UploadStep onNext={() => goTo("details")} setTicketData={setTicketData} setExtractedInfo={setExtractedInfo} />}
           {step === "details" && <DetailsStep extractedInfo={extractedInfo} setExtractedInfo={setExtractedInfo} onNext={() => goTo("result")} onBack={() => goTo("upload")} />}
           {step === "result" && <ResultStep extractedInfo={extractedInfo} onNext={() => goTo("form")} onBack={() => goTo("details")} setCompensation={setCompensation} />}
           {step === "form" && <FormStep extractedInfo={extractedInfo} compensation={compensation} onBack={() => goTo("result")} />}
         </div>
-
         <p style={{ textAlign: "center", color: "#2a2a3a", fontSize: 11, fontFamily: "'DM Mono', monospace", marginTop: 20 }}>
-          Vi tager 25% af kompensationen Ã¢ÂÂ intet at betale hvis vi ikke vinder
+          Vi tager 25% af kompensationen — intet at betale hvis vi ikke vinder
         </p>
       </div>
-
       <Head>
-        <title>EU Rail Refund Ã¢ÂÂ FÃÂ¥ dine penge tilbage</title>
-        <meta name="description" content="KrÃÂ¦v togkompensation automatisk under EU-forordning 2021/782" />
+        <title>EU Rail Refund — Få dine penge tilbage</title>
+        <meta name="description" content="Kræv togkompensation automatisk under EU-forordning 2021/782" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
