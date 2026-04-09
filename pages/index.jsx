@@ -715,7 +715,7 @@ async function generateFuldmagtPdf({ info, comp, name, email, address }) {
   const items = [
     'To file and sign the official EU claim form (Regulation EU 2024/949) on behalf of the grantor.',
     'To correspond with the railway operator and national enforcement bodies, including ' + (comp.op ? comp.op.authority : 'the relevant authority') + '.',
-    'To receive the compensation amount and transfer the grantor's share (75%) within 5 business days.',
+    'To receive the compensation amount and transfer the grantor share (75%) within 5 business days.',
     'To escalate the claim to ' + (comp.op ? comp.op.authority : 'the relevant authority') + ' if the operator does not respond within 30 days.',
   ];
   items.forEach((item, i) => {
