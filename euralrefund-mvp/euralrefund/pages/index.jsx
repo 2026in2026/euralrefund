@@ -1,3 +1,17 @@
+// pdf-lib loaded dynamically
+let pdfLibLoaded = null;
+async function getPdfLib() {
+  if (pdfLibLoaded) return pdfLibLoaded;
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject('SSR');
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+    script.onload = () => { pdfLibLoaded = window.PDFLib; resolve(window.PDFLib); };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
 import { useState, useRef, useEffect } from "react";
 import Head from "next/head";
 
@@ -468,295 +482,288 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   );
 }
 
-function buildPdf(pages) {
-  const enc = s => {
-    let out = '';
-    for (let i = 0; i < s.length; i++) {
-      const c = s.charCodeAt(i);
-      if (c === 40) out += '\\(';
-      else if (c === 41) out += '\\)';
-      else if (c === 92) out += '\\\\';
-      else if (c > 127) out += '?';
-      else out += s[i];
-    }
-    return out;
-  };
-  const objs = [];
-  const addObj = (content) => { objs.push(content); return objs.length; };
-  const catalogIdx = addObj('');
-  const pagesIdx   = addObj('');
-  const pageIdxs = [];
-  const streamIdxs = [];
-  for (const pg of pages) {
-    const W = pg.W || 595, H = pg.H || 842;
-    const ops = [];
-    for (const cmd of pg.cmds) {
-      if (cmd.type === 'fillRect') {
-        const [r,g,b] = cmd.color || [0,0,0];
-        ops.push(`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg`);
-        ops.push(`${cmd.x.toFixed(2)} ${cmd.y.toFixed(2)} ${cmd.w.toFixed(2)} ${cmd.h.toFixed(2)} re f`);
-      } else if (cmd.type === 'strokeRect') {
-        const [r,g,b] = cmd.color || [0,0,0];
-        ops.push(`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} RG`);
-        ops.push(`${(cmd.lw||0.5).toFixed(2)} w`);
-        ops.push(`${cmd.x.toFixed(2)} ${cmd.y.toFixed(2)} ${cmd.w.toFixed(2)} ${cmd.h.toFixed(2)} re S`);
-      } else if (cmd.type === 'line') {
-        const [r,g,b] = cmd.color || [0,0,0];
-        ops.push(`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} RG`);
-        ops.push(`${(cmd.lw||0.5).toFixed(2)} w`);
-        ops.push(`${cmd.x1.toFixed(2)} ${cmd.y1.toFixed(2)} m ${cmd.x2.toFixed(2)} ${cmd.y2.toFixed(2)} l S`);
-      } else if (cmd.type === 'text') {
-        const [r,g,b] = cmd.color || [0,0,0];
-        const font = cmd.bold ? '/F2' : '/F1';
-        ops.push(`BT`);
-        ops.push(`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg`);
-        ops.push(`${font} ${(cmd.size||9).toFixed(1)} Tf`);
-        ops.push(`${cmd.x.toFixed(2)} ${cmd.y.toFixed(2)} Td`);
-        ops.push(`(${enc(String(cmd.text || ''))}) Tj`);
-        ops.push(`ET`);
-      }
-    }
-    const stream = ops.join('\n');
-    const streamIdx = addObj(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
-    streamIdxs.push(streamIdx);
-    const pageIdx = addObj(`<< /Type /Page /Parent ${pagesIdx} 0 R /MediaBox [0 0 ${W} ${H}] /Contents ${streamIdx} 0 R /Resources << /Font << /F1 ${objs.length+1} 0 R /F2 ${objs.length+2} 0 R >> >> >>`);
-    pageIdxs.push(pageIdx);
-    addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
-    addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
-  }
-  objs[pagesIdx-1] = `<< /Type /Pages /Kids [${pageIdxs.map(i=>i+' 0 R').join(' ')}] /Count ${pageIdxs.length} >>`;
-  objs[catalogIdx-1] = `<< /Type /Catalog /Pages ${pagesIdx} 0 R >>`;
-  let body = '%PDF-1.4\n';
-  const offsets = [];
-  for (let i = 0; i < objs.length; i++) {
-    offsets.push(body.length);
-    body += `${i+1} 0 obj\n${objs[i]}\nendobj\n`;
-  }
-  const xrefOffset = body.length;
-  body += `xref\n0 ${objs.length+1}\n0000000000 65535 f \n`;
-  for (const off of offsets) body += `${String(off).padStart(10,'0')} 00000 n \n`;
-  body += `trailer\n<< /Size ${objs.length+1} /Root ${catalogIdx} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-  const arr = new Uint8Array(body.length);
-  for (let i = 0; i < body.length; i++) arr[i] = body.charCodeAt(i) & 0xff;
-  return arr;
-}
-
 function wrapText(text, maxChars) {
-  const words = (text||'').split(' ');
+  const words = (text || '').split(' ');
   const lines = []; let cur = '';
   for (const w of words) {
-    if ((cur+' '+w).trim().length > maxChars) { lines.push(cur.trim()); cur = w; }
-    else cur = (cur+' '+w).trim();
+    if ((cur + ' ' + w).trim().length > maxChars) { lines.push(cur.trim()); cur = w; }
+    else cur = (cur + ' ' + w).trim();
   }
   if (cur) lines.push(cur);
   return lines;
 }
 
-function generateEUFormPdf({ info, comp, name, email, address, iban }) {
-  const W=595, H=842, m=48;
-  const blue=[0.10,0.18,0.45], dark=[0.08,0.08,0.08], mid=[0.45,0.45,0.45];
-  const lite=[0.93,0.93,0.93], gold=[1.0,0.85,0.0], white=[1,1,1];
-  const cmds = [];
-  const fillRect=(x,y,w,h,color)=>cmds.push({type:'fillRect',x,y,w,h,color});
-  const strokeRect=(x,y,w,h,color,lw)=>cmds.push({type:'strokeRect',x,y,w,h,color,lw});
-  const line=(x1,y1,x2,y2,color,lw)=>cmds.push({type:'line',x1,y1,x2,y2,color,lw});
-  const text=(t,x,y,size,color,bold)=>cmds.push({type:'text',text:t,x,y,size,color,bold});
+async function generateEUFormPdf({ info, comp, name, email, address, iban }) {
+  const { PDFDocument, rgb, StandardFonts } = await getPdfLib();
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595, 842]);
+  const { width, height } = page.getSize();
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
-  fillRect(0,H-50,W,50,blue);
-  text('EUROPEAN UNION',m,H-15,7,white,true);
-  text('Commission Implementing Regulation (EU) 2024/949 of 27 March 2024',m,H-26,6.5,[0.75,0.82,1]);
-  text('COMMON FORM - REIMBURSEMENT AND COMPENSATION REQUEST',m,H-39,9.5,white,true);
-  for(let i=0;i<12;i++){const a=(i/12)*Math.PI*2;text('*',W-66+Math.cos(a)*14,H-25+Math.sin(a)*14,7,gold);}
+  const blue = rgb(0.10, 0.18, 0.45);
+  const dark = rgb(0.08, 0.08, 0.08);
+  const mid = rgb(0.45, 0.45, 0.45);
+  const lite = rgb(0.93, 0.93, 0.93);
+  const white = rgb(1, 1, 1);
+  const gold = rgb(1.0, 0.85, 0.0);
+  const m = 48;
 
-  let y=H-65;
-  const section=(title)=>{
-    fillRect(m-4,y-4,W-m*2+8,15,[0.93,0.96,1]);
-    text(title,m,y+3,7.5,blue,true);
-    y-=22;
+  const drawText = (text, x, y, size, color, bold) => {
+    page.drawText(String(text || '').replace(/[^ -~]/g, '?'), {
+      x, y, size, color, font: bold ? helveticaBold : helvetica
+    });
+  };
+  const fillRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, color });
+  const strokeRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, borderColor: color, borderWidth: 0.6, opacity: 0 });
+  const drawLine = (x1, y1, x2, y2, color) => page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, color, thickness: 0.6 });
+
+  // HEADER
+  fillRect(0, height - 50, width, 50, blue);
+  drawText('EUROPEAN UNION', m, height - 15, 7, white, true);
+  drawText('Commission Implementing Regulation (EU) 2024/949 of 27 March 2024', m, height - 26, 6.5, rgb(0.75, 0.82, 1), false);
+  drawText('COMMON FORM - REIMBURSEMENT AND COMPENSATION REQUEST', m, height - 39, 9.5, white, true);
+
+  // EU stars
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    drawText('*', width - 66 + Math.cos(a) * 14, height - 25 + Math.sin(a) * 14, 7, gold, true);
+  }
+
+  let y = height - 65;
+
+  const section = (title) => {
+    fillRect(m - 4, y - 4, width - m * 2 + 8, 15, rgb(0.93, 0.96, 1));
+    drawText(title, m, y + 3, 7.5, blue, true);
+    y -= 22;
   };
 
+  const fld = (label, val, fx, fy, fw) => {
+    drawText(label, fx, fy + 14, 6.5, mid, false);
+    fillRect(fx, fy, fw, 13, lite);
+    drawText((val || '').toString().substring(0, Math.floor(fw / 5.5)), fx + 3, fy + 3, 8.5, dark, false);
+  };
+
+  // SECTION 1 - CLAIM TYPE
   section('1.  TYPE OF CLAIM - Place a cross [X] in the applicable box');
-  text('Reimbursement due to cancellation:',m,y+1,8,dark);
-  strokeRect(m+170,y-1,9,9,dark,0.6);
-  text('Compensation for delay (Art. 19 Reg. EU 2021/782):',m+230,y+1,8,dark);
-  strokeRect(m+440,y-1,9,9,dark,0.6); fillRect(m+441,y,7,7,blue); text('X',m+442,y+1,7,white,true);
-  y-=15;
-  text('Continuation / re-routing:',m,y+1,8,dark); strokeRect(m+130,y-1,9,9,dark,0.6);
-  text('Meals / refreshments:',m+230,y+1,8,dark); strokeRect(m+335,y-1,9,9,dark,0.6);
-  y-=20;
+  drawText('Reimbursement due to cancellation:', m, y + 1, 8, dark, false);
+  strokeRect(m + 170, y - 1, 9, 9, dark);
+  drawText('Compensation for delay (Art. 19 Reg. EU 2021/782):', m + 230, y + 1, 8, dark, false);
+  strokeRect(m + 440, y - 1, 9, 9, dark);
+  fillRect(m + 441, y, 7, 7, blue);
+  drawText('X', m + 442, y + 1, 7, white, true);
+  y -= 15;
+  drawText('Continuation / re-routing:', m, y + 1, 8, dark, false);
+  strokeRect(m + 130, y - 1, 9, 9, dark);
+  drawText('Meals / refreshments:', m + 230, y + 1, 8, dark, false);
+  strokeRect(m + 335, y - 1, 9, 9, dark);
+  y -= 20;
 
+  // SECTION 2 - JOURNEY
   section('2.  JOURNEY DETAILS');
-  const hw=(W-m*2-8)/2;
-  const fld=(label,val,fx,fy,fw)=>{
-    text(label,fx,fy+14,6.5,mid);
-    fillRect(fx,fy,fw,13,lite);
-    text(val||'',fx+3,fy+3,8.5,dark);
-  };
-
-  fld('Station of departure',info.fra,m,y,hw);
-  fld('Station of destination',info.til,m+hw+8,y,hw);
-  y-=26;
-  fld('Date of travel (DD/MM/YYYY)',info.dato,m,y,hw);
-  fld('Scheduled departure time',info.tidspunkt,m+hw+8,y,hw);
-  y-=26;
-  fld('Railway undertaking (operator)',info.operatør||'',m,y,hw);
-  fld('Train number (if known)','',m+hw+8,y,hw);
-  y-=26;
-
-  text('Delay at final destination:',m,y+1,8,dark);
-  const dOpts=['60-119 min','>= 120 min'];
-  const dChk=[info.forsinkelse==='60-119 min',info.forsinkelse==='120+ min'];
-  let dx=m+145;
-  dOpts.forEach((d,i)=>{
-    strokeRect(dx,y-1,9,9,dark,0.6);
-    if(dChk[i]){fillRect(dx+1,y,7,7,blue);text('X',dx+1.5,y+1,7,white,true);}
-    text(d,dx+12,y+1,8,dark);
-    dx+=90;
+  const hw = (width - m * 2 - 8) / 2;
+  fld('Station of departure', info.fra, m, y, hw);
+  fld('Station of destination', info.til, m + hw + 8, y, hw);
+  y -= 26;
+  fld('Date of travel (DD/MM/YYYY)', info.dato, m, y, hw);
+  fld('Scheduled departure time', info.tidspunkt, m + hw + 8, y, hw);
+  y -= 26;
+  fld('Railway undertaking (operator)', (info.operatør || ''), m, y, hw);
+  fld('Train number (if known)', '', m + hw + 8, y, hw);
+  y -= 26;
+  drawText('Delay at final destination:', m, y + 1, 8, dark, false);
+  const dOpts = ['60-119 min', '>= 120 min'];
+  const dChk = [info.forsinkelse === '60-119 min', info.forsinkelse === '120+ min'];
+  let dx = m + 145;
+  dOpts.forEach((d, i) => {
+    strokeRect(dx, y - 1, 9, 9, dark);
+    if (dChk[i]) { fillRect(dx + 1, y, 7, 7, blue); drawText('X', dx + 1.5, y + 1, 7, white, true); }
+    drawText(d, dx + 12, y + 1, 8, dark, false);
+    dx += 90;
   });
-  y-=26;
+  y -= 26;
+  fld('Ticket price', (info.billetpris || '') + ' ' + (info.valuta || 'DKK'), m, y, hw);
+  fld('Compensation claimed (Art.19)', comp.compensation.toFixed(2) + ' ' + (info.valuta || 'DKK'), m + hw + 8, y, hw);
+  y -= 30;
 
-  fld('Ticket price',info.billetpris+' '+info.valuta,m,y,hw);
-  fld('Compensation claimed (Art.19)',comp.compensation.toFixed(2)+' '+info.valuta,m+hw+8,y,hw);
-  y-=30;
-
+  // SECTION 3 - PASSENGER
   section('3.  PASSENGER DETAILS');
-  fld('Full name',name,m,y,W-m*2); y-=26;
-  fld('Address',address||'',m,y,W-m*2); y-=26;
-  fld('Email address',email,m,y,hw);
-  fld('Phone (optional)','',m+hw+8,y,hw); y-=26;
-  fld('IBAN (for bank transfer)',iban||'',m,y,W-m*2); y-=30;
+  fld('Full name', name, m, y, width - m * 2); y -= 26;
+  fld('Address', address || '', m, y, width - m * 2); y -= 26;
+  fld('Email address', email, m, y, hw);
+  fld('Phone (optional)', '', m + hw + 8, y, hw); y -= 26;
+  fld('IBAN (for bank transfer)', iban || '', m, y, width - m * 2); y -= 30;
 
+  // SECTION 4 - PREVIOUS REQUEST
   section('4.  PREVIOUS REQUEST');
-  text('Have you already submitted a request to the railway undertaking?',m,y+1,8,dark);
-  strokeRect(m+278,y-1,9,9,dark,0.6); text('Yes',m+290,y+1,8,dark);
-  strokeRect(m+315,y-1,9,9,dark,0.6); fillRect(m+316,y,7,7,blue); text('X',m+316.5,y+1,7,white,true);
-  text('No',m+327,y+1,8,dark);
-  y-=22;
+  drawText('Have you already submitted a request to the railway undertaking?', m, y + 1, 8, dark, false);
+  strokeRect(m + 278, y - 1, 9, 9, dark);
+  drawText('Yes', m + 290, y + 1, 8, dark, false);
+  strokeRect(m + 315, y - 1, 9, 9, dark);
+  fillRect(m + 316, y, 7, 7, blue);
+  drawText('X', m + 316.5, y + 1, 7, white, true);
+  drawText('No', m + 327, y + 1, 8, dark, false);
+  y -= 22;
 
+  // SECTION 5 - DOCUMENTS
   section('5.  SUPPORTING DOCUMENTS ENCLOSED');
-  [['Original ticket / booking confirmation',true],['Proof of delay (station stamp, screenshot)',false],['Proof of costs for alternative transport',false]].forEach(([label,chk])=>{
-    strokeRect(m,y-1,9,9,dark,0.6);
-    if(chk){fillRect(m+1,y,7,7,blue);text('X',m+1.5,y+1,7,white,true);}
-    text(label,m+13,y+1,8,dark);
-    y-=15;
+  [['Original ticket / booking confirmation', true], ['Proof of delay (station stamp, screenshot)', false], ['Proof of costs for alternative transport', false]].forEach(([label, chk]) => {
+    strokeRect(m, y - 1, 9, 9, dark);
+    if (chk) { fillRect(m + 1, y, 7, 7, blue); drawText('X', m + 1.5, y + 1, 7, white, true); }
+    drawText(label, m + 13, y + 1, 8, dark, false);
+    y -= 15;
   });
-  y-=8;
+  y -= 8;
 
+  // SECTION 6 - SIGNATURE
   section('6.  DECLARATION AND SIGNATURE');
-  const decl='I hereby acknowledge that the recipient may share my personal data with other relevant parties if required for processing. I declare that all information provided is true and accurate.';
-  wrapText(decl,104).forEach(l=>{text(l,m,y,7.5,mid);y-=11;});
-  y-=6;
+  const decl = 'I hereby acknowledge that the recipient may share my personal data with other relevant parties if required for processing. I declare that all information provided is true and accurate.';
+  wrapText(decl, 104).forEach(l => { drawText(l, m, y, 7.5, mid, false); y -= 11; });
+  y -= 6;
+  strokeRect(m, y - 33, 220, 41, rgb(0.6, 0.6, 0.6));
+  drawText(name.substring(0, 28), m + 6, y - 18, 13, blue, true);
+  drawText('(digital signature - EU 2024/949)', m + 6, y - 30, 6.5, mid, false);
+  drawText('Signature:', m, y + 4, 7.5, mid, false);
+  fld('Date', new Date().toLocaleDateString('da-DK'), m + 230, y - 14, 120);
+  fld('Place', 'Denmark', m + 230, y - 40, 120);
+  y -= 58;
 
-  strokeRect(m,y-33,220,41,[0.6,0.6,0.6],0.8);
-  text(name,m+6,y-18,13,blue,true);
-  text('(digital signature - EU 2024/949)',m+6,y-30,6.5,mid);
-  text('Signature:',m,y+4,7.5,mid);
-  fld('Date',new Date().toLocaleDateString('da-DK'),m+230,y-14,120);
-  fld('Place','Denmark',m+230,y-40,120);
-  y-=58;
+  // SUBMIT LINE
+  drawLine(m, y, width - m, y, rgb(0.6, 0.6, 0.6));
+  y -= 13;
+  drawText('SUBMIT TO: ' + (info.operatør || '') + '  |  ' + (comp.op ? comp.op.authority : '') + '  |  ' + (comp.op ? comp.op.url : ''), m, y, 7.5, blue, true);
+  y -= 13;
+  drawText('This form may be submitted electronically or on paper to any EU railway undertaking (Reg. EU 2021/782).', m, y, 7, mid, false);
 
-  line(m,y,W-m,y,[0.6,0.6,0.6],0.8); y-=13;
-  text('SUBMIT TO: '+(info.operatør||'')+'  -  '+(comp.op.authority)+'  -  '+(comp.op.url),m,y,7.5,blue,true);
-  y-=13;
-  text('This form may be submitted electronically or on paper to any EU railway undertaking (Reg. EU 2021/782).',m,y,7,mid);
+  // FOOTER
+  fillRect(0, 0, width, 20, blue);
+  drawText('Commission Implementing Reg. (EU) 2024/949  |  Reg. (EU) 2021/782 on rail passengers rights', m, 6, 6.5, rgb(0.75, 0.82, 1), false);
+  drawText('Generated: ' + new Date().toLocaleDateString('da-DK'), width - 130, 6, 6.5, rgb(0.75, 0.82, 1), false);
 
-  fillRect(0,0,W,20,blue);
-  text('Commission Implementing Reg. (EU) 2024/949  -  Reg. (EU) 2021/782 on rail passengers rights',m,6,6.5,[0.75,0.82,1]);
-  text('Generated: '+new Date().toLocaleDateString('da-DK'),W-130,6,6.5,[0.75,0.82,1]);
-
-  return buildPdf([{W,H,cmds}]);
+  return await doc.save();
 }
 
-function generateFuldmagtPdf({ info, comp, name, email, address }) {
-  const W=595, H=842, m=60;
-  const blue=[0.10,0.18,0.45], dark=[0.08,0.08,0.08], mid=[0.45,0.45,0.45];
-  const lite=[0.93,0.93,0.93], gold=[1.0,0.85,0.0], white=[1,1,1];
-  const cmds=[];
-  const fillRect=(x,y,w,h,color)=>cmds.push({type:'fillRect',x,y,w,h,color});
-  const strokeRect=(x,y,w,h,color,lw)=>cmds.push({type:'strokeRect',x,y,w,h,color,lw});
-  const line=(x1,y1,x2,y2,color,lw)=>cmds.push({type:'line',x1,y1,x2,y2,color,lw});
-  const text=(t,x,y,size,color,bold)=>cmds.push({type:'text',text:t,x,y,size,color,bold});
-  const wdraw=(str,x,y,maxW,size,color,bold,lh=15)=>{
-    const chars=Math.floor(maxW/(size*0.52));
-    wrapText(str,chars).forEach(l=>{text(l,x,y,size,color,bold);y-=lh;});
-    return y;
+async function generateFuldmagtPdf({ info, comp, name, email, address }) {
+  const { PDFDocument, rgb, StandardFonts } = await getPdfLib();
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595, 842]);
+  const { width, height } = page.getSize();
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  const blue = rgb(0.10, 0.18, 0.45);
+  const dark = rgb(0.08, 0.08, 0.08);
+  const mid = rgb(0.45, 0.45, 0.45);
+  const lite = rgb(0.93, 0.93, 0.93);
+  const white = rgb(1, 1, 1);
+  const gold = rgb(1.0, 0.85, 0.0);
+  const m = 60;
+
+  const drawText = (text, x, y, size, color, bold) => {
+    page.drawText(String(text || '').replace(/[^ -~]/g, '?'), {
+      x, y, size, color, font: bold ? helveticaBold : helvetica
+    });
+  };
+  const fillRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, color });
+  const strokeRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, borderColor: color, borderWidth: 0.8, opacity: 0 });
+  const fld = (label, val, fx, fy, fw) => {
+    drawText(label, fx, fy + 14, 6.5, mid, false);
+    fillRect(fx, fy, fw, 13, lite);
+    drawText((val || '').toString().substring(0, Math.floor(fw / 5.5)), fx + 3, fy + 3, 8.5, dark, false);
   };
 
-  fillRect(0,H-70,W,70,blue);
-  text('FULDMAGT',m,H-28,24,white,true);
-  text('Power of Attorney - Togkompensationskrav',m,H-48,11,[0.75,0.82,1]);
-  text('Dato: '+new Date().toLocaleDateString('da-DK'),W-140,H-44,9,[0.75,0.82,1]);
-  for(let i=0;i<12;i++){const a=(i/12)*Math.PI*2;text('*',W-66+Math.cos(a)*14,H-36+Math.sin(a)*14,7,gold);}
+  // HEADER
+  fillRect(0, height - 70, width, 70, blue);
+  drawText('POWER OF ATTORNEY', m, height - 28, 22, white, true);
+  drawText('Rail Compensation Claim - EU Regulation 2021/782', m, height - 48, 11, rgb(0.75, 0.82, 1), false);
+  drawText('Date: ' + new Date().toLocaleDateString('da-DK'), width - 140, height - 44, 9, rgb(0.75, 0.82, 1), false);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    drawText('*', width - 66 + Math.cos(a) * 14, height - 36 + Math.sin(a) * 14, 7, gold, true);
+  }
 
-  let y=H-96;
-  fillRect(m-12,y-58,W-m*2+24,72,[0.96,0.97,1]);
-  text('UNDERTEGNEDE - FULDMAGTSGIVER',m,y,8.5,mid,true); y-=18;
-  text('Navn:',m,y,10,dark,true); text(name,m+50,y,10,dark); y-=16;
-  text('Adresse:',m,y,10,dark,true); text(address||'-',m+60,y,10,dark); y-=16;
-  text('Email:',m,y,10,dark,true); text(email,m+45,y,10,dark); y-=26;
+  let y = height - 96;
 
-  text('GIVER HERMED FULDMAGT TIL:',m,y,9,mid,true); y-=16;
-  fillRect(m-12,y-34,W-m*2+24,48,lite);
-  text('EU Rail Refund ApS',m,y,13,blue,true); y-=18;
-  text('Til at handle pa undertegnedes vegne i forbindelse med nedenstaaende togkompensationskrav.',m,y,9.5,dark);
-  y-=36;
+  // GRANTOR
+  fillRect(m - 12, y - 58, width - m * 2 + 24, 72, rgb(0.96, 0.97, 1));
+  drawText('THE UNDERSIGNED - GRANTOR', m, y, 8.5, mid, true); y -= 18;
+  drawText('Name:', m, y, 10, dark, true); drawText(name, m + 50, y, 10, dark, false); y -= 16;
+  drawText('Address:', m, y, 10, dark, true); drawText((address || '-').substring(0, 60), m + 60, y, 10, dark, false); y -= 16;
+  drawText('Email:', m, y, 10, dark, true); drawText(email, m + 45, y, 10, dark, false); y -= 26;
 
-  fillRect(m-12,y-78,W-m*2+24,90,[0.97,0.98,1]);
-  fillRect(m-12,y+6,W-m*2+24,16,blue);
-  text('KRAVETS REJSEDETALJER',m,y+10,8,white,true); y-=16;
-  text('Fra: '+info.fra,m,y,9.5,dark,true);
-  text('Til: '+info.til,m+240,y,9.5,dark,true); y-=15;
-  text('Dato: '+info.dato,m,y,9.5,dark);
-  text('Forsinkelse: '+info.forsinkelse,m+140,y,9.5,dark); y-=15;
-  text('Operatoer: '+(info.operatør||''),m,y,9.5,dark); y-=15;
-  text('Kompensationskrav: '+comp.compensation.toFixed(2)+' '+info.valuta+' (jf. EU 2021/782, Art. 19)',m,y,9.5,blue,true);
-  y-=32;
+  drawText('HEREBY GRANTS POWER OF ATTORNEY TO:', m, y, 9, mid, true); y -= 16;
+  fillRect(m - 12, y - 34, width - m * 2 + 24, 48, lite);
+  drawText('EU Rail Refund ApS', m, y, 13, blue, true); y -= 18;
+  drawText('To act on behalf of the undersigned in connection with the rail compensation claim described below.', m, y, 9.5, dark, false);
+  y -= 36;
 
-  text('FULDMAGTENS OMFANG',m,y,9,mid,true); y-=16;
-  const items=[
-    'At indgive og underskrive den officielle EU-blanket (Forordning EU 2024/949) pa vegne af fuldmagtsgiver.',
-    'At korrespondere med jernbaneoperatoeren og nationale klageinstanser, herunder '+(comp.op.authority)+'.',
-    'At modtage kompensationsbelobet og udbetale fuldmagtsgivers andel (75%) inden for 5 hverdage.',
-    'At videresende klagen til '+(comp.op.authority)+' hvis operatoeren ikke svarer inden 30 dage.',
+  // JOURNEY DETAILS
+  fillRect(m - 12, y - 78, width - m * 2 + 24, 90, rgb(0.97, 0.98, 1));
+  fillRect(m - 12, y + 6, width - m * 2 + 24, 16, blue);
+  drawText('CLAIM JOURNEY DETAILS', m, y + 10, 8, white, true); y -= 16;
+  drawText('From: ' + (info.fra || ''), m, y, 9.5, dark, true);
+  drawText('To: ' + (info.til || ''), m + 240, y, 9.5, dark, true); y -= 15;
+  drawText('Date: ' + (info.dato || ''), m, y, 9.5, dark, false);
+  drawText('Delay: ' + (info.forsinkelse || ''), m + 140, y, 9.5, dark, false); y -= 15;
+  drawText('Operator: ' + (info.operatør || ''), m, y, 9.5, dark, false); y -= 15;
+  drawText('Compensation claimed: ' + (comp.compensation || 0).toFixed(2) + ' ' + (info.valuta || 'DKK') + ' (EU 2021/782, Art. 19)', m, y, 9.5, blue, true);
+  y -= 32;
+
+  // SCOPE
+  drawText('SCOPE OF POWER OF ATTORNEY', m, y, 9, mid, true); y -= 16;
+  const items = [
+    'To file and sign the official EU claim form (Regulation EU 2024/949) on behalf of the grantor.',
+    'To correspond with the railway operator and national enforcement bodies, including ' + (comp.op ? comp.op.authority : 'the relevant authority') + '.',
+    'To receive the compensation amount and transfer the grantor's share (75%) within 5 business days.',
+    'To escalate the claim to ' + (comp.op ? comp.op.authority : 'the relevant authority') + ' if the operator does not respond within 30 days.',
   ];
-  items.forEach((item,i)=>{
-    text((i+1)+'.',m,y,9.5,dark,true);
-    y=wdraw(item,m+18,y,W-m*2-18,9.5,dark,false,14)-6;
+  items.forEach((item, i) => {
+    drawText((i + 1) + '.', m, y, 9.5, dark, true);
+    wrapText(item, 90).forEach(l => { drawText(l, m + 18, y, 9.5, dark, false); y -= 14; });
+    y -= 6;
   });
-  y-=8;
+  y -= 8;
 
-  fillRect(m-12,y-26,W-m*2+24,40,[1,0.97,0.89]);
-  text('HONORAR:',m,y+8,9,[0.55,0.28,0],true);
-  text('25% af opnaet kompensation. Ingen betaling ved afvisning af klagen.',m,y-6,9.5,dark);
-  y-=42;
+  // FEE
+  fillRect(m - 12, y - 26, width - m * 2 + 24, 40, rgb(1, 0.97, 0.89));
+  drawText('FEE:', m, y + 8, 9, rgb(0.55, 0.28, 0), true);
+  drawText('25% of compensation obtained. No payment if the claim is rejected.', m, y - 6, 9.5, dark, false);
+  y -= 42;
 
-  y=wdraw('GDPR: Personoplysninger behandles iht. Forordning (EU) 2016/679 og anvendes udelukkende til behandling af dette krav.',m,y,W-m*2,8.5,mid,false,13)-12;
+  // GDPR
+  wrapText('GDPR: Personal data is processed pursuant to Regulation (EU) 2016/679 and used solely for the purpose of processing this claim.', 90).forEach(l => {
+    drawText(l, m, y, 8.5, mid, false); y -= 13;
+  });
+  y -= 12;
 
-  text('UNDERSKRIFT / SIGNATURE',m,y,9,mid,true); y-=18;
-  strokeRect(m,y-40,220,48,[0.6,0.6,0.6],0.8);
-  text(name,m+8,y-22,15,blue,true);
-  text('(digital underskrift)',m+8,y-36,7,mid);
-  text('Fuldmagtsgiver:',m,y+4,7.5,mid);
-  text('Dato: '+new Date().toLocaleDateString('da-DK'),m+250,y-14,10,dark);
-  text('Sted: Danmark',m+250,y-32,10,dark);
+  // SIGNATURE
+  drawText('SIGNATURE', m, y, 9, mid, true); y -= 18;
+  strokeRect(m, y - 40, 220, 48, rgb(0.6, 0.6, 0.6));
+  drawText(name.substring(0, 24), m + 8, y - 22, 15, blue, true);
+  drawText('(digital signature)', m + 8, y - 36, 7, mid, false);
+  drawText('Grantor:', m, y + 4, 7.5, mid, false);
+  fld('Date', new Date().toLocaleDateString('da-DK'), m + 250, y - 14, 110);
+  fld('Place', 'Denmark', m + 250, y - 32, 110);
 
-  fillRect(0,0,W,22,blue);
-  text('Fuldmagt til EU Rail Refund ApS  -  Jf. Forordning (EU) 2021/782 og 2024/949',m,7,6.5,[0.75,0.82,1]);
+  // FOOTER
+  fillRect(0, 0, width, 22, blue);
+  drawText('Power of Attorney to EU Rail Refund ApS  |  Regulation (EU) 2021/782 and 2024/949', m, 7, 6.5, rgb(0.75, 0.82, 1), false);
 
-  return buildPdf([{W,H,cmds}]);
+  return await doc.save();
 }
 
-function downloadPdf(bytes, filename) {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  const b64 = btoa(binary);
+async function downloadPdf(bytes, filename) {
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = 'data:application/pdf;base64,' + b64;
+  a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
+
 
 function FormStep({ extractedInfo, compensation, onBack }) {
   const [subStep, setSubStep] = useState("details");
@@ -786,7 +793,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   const doGenerate = async () => {
     setLoading(true); setError("");
     try {
-      const euBytes = generateEUFormPdf({
+      const euBytes = await generateEUFormPdf({
         info: {
           fra: extractedInfo.fra,
           til: extractedInfo.til,
@@ -800,7 +807,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
         comp: compensation,
         name, email, address, iban
       });
-      const fuldmagtBytes = generateFuldmagtPdf({
+      const fuldmagtBytes = await generateFuldmagtPdf({
         info: {
           fra: extractedInfo.fra,
           til: extractedInfo.til,
@@ -813,7 +820,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
         comp: compensation,
         name, email, address
       });
-      downloadPdf(euBytes, "EU-blanket-togkompensation.pdf");
+      await downloadPdf(euBytes, "EU-blanket-togkompensation.pdf");
       setTimeout(() => downloadPdf(fuldmagtBytes, "Fuldmagt-EU-Rail-Refund.pdf"), 800);
       setSubStep("done");
     } catch(e) {
