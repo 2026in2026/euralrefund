@@ -524,12 +524,27 @@ async function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   const m = 48;
 
   const drawText = (text, x, y, size, color, bold) => {
-    page.drawText(String(text || '').replace(/[^ -~]/g, '?'), {
+    const sanitized = String(text || '')
+      .replace(/æ/g, 'ae').replace(/Æ/g, 'Ae')
+      .replace(/ø/g, 'o').replace(/Ø/g, 'O')
+      .replace(/å/g, 'a').replace(/Å/g, 'A')
+      .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+      .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+      .replace(/ä/g, 'a').replace(/Ä/g, 'A')
+      .replace(/ß/g, 'ss')
+      .replace(/é/g, 'e').replace(/è/g, 'e').replace(/ê/g, 'e').replace(/É/g, 'E')
+      .replace(/à/g, 'a').replace(/â/g, 'a').replace(/À/g, 'A')
+      .replace(/î/g, 'i').replace(/ï/g, 'i')
+      .replace(/ô/g, 'o').replace(/ù/g, 'u').replace(/û/g, 'u')
+      .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+      .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
+      .replace(/[^\x20-\x7E]/g, '');
+    page.drawText(sanitized, {
       x, y, size, color, font: bold ? helveticaBold : helvetica
     });
   };
   const fillRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, color });
-  const strokeRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, borderColor: color, borderWidth: 0.6, opacity: 0 });
+  const strokeRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, borderColor: color, borderWidth: 0.6, color: rgb(1, 1, 1) });
   const drawLine = (x1, y1, x2, y2, color) => page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, color, thickness: 0.6 });
 
   // HEADER
@@ -627,7 +642,7 @@ async function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   const decl = 'I hereby acknowledge that the recipient may share my personal data with other relevant parties if required for processing. I declare that all information provided is true and accurate.';
   wrapText(decl, 104).forEach(l => { drawText(l, m, y, 7.5, mid, false); y -= 11; });
   y -= 6;
-  strokeRect(m, y - 33, 220, 41, rgb(0.6, 0.6, 0.6));
+  page.drawRectangle({ x: m, y: y - 33, width: 220, height: 41, borderColor: rgb(0.7, 0.7, 0.7), borderWidth: 0.8, color: rgb(0.98, 0.98, 0.98) });
   drawText(name.substring(0, 28), m + 6, y - 18, 13, blue, true);
   drawText('(digital signature - EU 2024/949)', m + 6, y - 30, 6.5, mid, false);
   drawText('Signature:', m, y + 4, 7.5, mid, false);
@@ -635,7 +650,7 @@ async function generateEUFormPdf({ info, comp, name, email, address, iban }) {
   fld('Place', 'Denmark', m + 230, y - 40, 120);
   y -= 58;
 
-  drawLine(m, y, width - m, y, rgb(0.6, 0.6, 0.6));
+  page.drawLine({ start: { x: m, y: y }, end: { x: width - m, y: y }, color: rgb(0.8, 0.8, 0.8), thickness: 0.5 });
   y -= 13;
   drawText('SUBMIT TO: ' + (info.operatør || '') + '  |  ' + (comp.op ? comp.op.authority : '') + '  |  ' + (comp.op ? comp.op.url : ''), m, y, 7.5, blue, true);
   y -= 13;
@@ -665,12 +680,27 @@ async function generateFuldmagtPdf({ info, comp, name, email, address }) {
   const m = 60;
 
   const drawText = (text, x, y, size, color, bold) => {
-    page.drawText(String(text || '').replace(/[^ -~]/g, '?'), {
+    const sanitized = String(text || '')
+      .replace(/æ/g, 'ae').replace(/Æ/g, 'Ae')
+      .replace(/ø/g, 'o').replace(/Ø/g, 'O')
+      .replace(/å/g, 'a').replace(/Å/g, 'A')
+      .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+      .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+      .replace(/ä/g, 'a').replace(/Ä/g, 'A')
+      .replace(/ß/g, 'ss')
+      .replace(/é/g, 'e').replace(/è/g, 'e').replace(/ê/g, 'e').replace(/É/g, 'E')
+      .replace(/à/g, 'a').replace(/â/g, 'a').replace(/À/g, 'A')
+      .replace(/î/g, 'i').replace(/ï/g, 'i')
+      .replace(/ô/g, 'o').replace(/ù/g, 'u').replace(/û/g, 'u')
+      .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+      .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
+      .replace(/[^\x20-\x7E]/g, '');
+    page.drawText(sanitized, {
       x, y, size, color, font: bold ? helveticaBold : helvetica
     });
   };
   const fillRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, color });
-  const strokeRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, borderColor: color, borderWidth: 0.8, opacity: 0 });
+  const strokeRect = (x, y, w, h, color) => page.drawRectangle({ x, y, width: w, height: h, borderColor: color, borderWidth: 0.8, color: rgb(1, 1, 1) });
   const fld = (label, val, fx, fy, fw) => {
     drawText(label, fx, fy + 14, 6.5, mid, false);
     fillRect(fx, fy, fw, 13, lite);
