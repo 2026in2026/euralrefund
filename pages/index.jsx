@@ -111,18 +111,18 @@ function ProgressBar({ step }) {
           <div key={s} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
             <div style={{
               width: 32, height: 32, borderRadius: "50%",
-              background: active ? "#C8A96E" : "#E8E6E0",
-              border: `2px solid ${active ? "#C8A96E" : "#C8C6C0"}`,
+              background: active ? "#C8A96E" : "#F0EDE8",
+              border: `2px solid ${active ? "#C8A96E" : "#E0DCD4"}`,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 12, fontFamily: "'DM Mono', monospace",
-              color: active ? "#F5F4F0" : "#888898",
+              color: active ? "#FAFAF8" : "#9090A0",
               fontWeight: 700, flexShrink: 0, transition: "all 0.3s ease"
             }}>
               {i < STEPS.indexOf(step) ? "✓" : i + 1}
             </div>
-            <span style={{ fontSize: 11, color: active ? "#C8A96E" : "#AAAAAA", marginLeft: 6, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>{s}</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: active ? "#C8A96E" : "#9090A0", marginLeft: 6, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>{s}</span>
             {i < steps.length - 1 && (
-              <div style={{ flex: 1, height: 1, background: active && i < STEPS.indexOf(step) ? "#C8A96E" : "#C8C6C0", margin: "0 12px", transition: "all 0.3s ease" }} />
+              <div style={{ flex: 1, height: 1, background: active && i < STEPS.indexOf(step) ? "#C8A96E" : "#E0DCD4", margin: "0 12px", transition: "all 0.3s ease" }} />
             )}
           </div>
         );
@@ -191,13 +191,13 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
 
   return (
     <div>
-      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#1a1a2a", marginBottom: 8, fontWeight: 400 }}>
+      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#1C1C28", marginBottom: 8, fontWeight: 400 }}>
         Upload your ticket
       </h2>
-      <p style={{ color: "#555560", fontSize: 14, marginBottom: 8, fontFamily: "'DM Mono', monospace" }}>
+      <p style={{ color: "#4A4A5A", fontSize: 14, marginBottom: 8, fontFamily: "'DM Mono', monospace" }}>
         PDF or image — we read the details automatically
       </p>
-      <div style={{ background: "rgba(200,169,110,0.07)", border: "1px solid rgba(200,169,110,0.2)", borderRadius: 8, padding: "8px 12px", marginBottom: 20, fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E" }}>
+      <div style={{ background: "#FFFBF0", border: "1px solid #E8D090", borderRadius: 8, padding: "8px 12px", marginBottom: 20, fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E" }}>
         ⚠ Ticket upload is required to file a claim — this verifies your journey
       </div>
       <div
@@ -206,10 +206,10 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
         style={{
-          border: `2px dashed ${dragging ? "#C8A96E" : file ? "#4CAF7A" : "#C8C6C0"}`,
+          border: `2px dashed ${dragging ? "#C8A96E" : file ? "#2D8653" : "#E0DCD4"}`,
           borderRadius: 12, padding: "48px 32px",
           textAlign: "center", cursor: "pointer",
-          background: dragging ? "rgba(200,169,110,0.05)" : file ? "rgba(76,175,122,0.05)" : "rgba(0,0,0,0.02)",
+          background: dragging ? "#FFFBF0" : file ? "#F0FAF4" : "#F7F6F3",
           transition: "all 0.2s ease"
         }}
       >
@@ -218,17 +218,17 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
         {file ? (
           <div>
             <div style={{ color: "#4CAF7A", fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700 }}>{file.name}</div>
-            <div style={{ color: "#555560", fontSize: 12, marginTop: 4 }}>{(file.size / 1024).toFixed(0)} KB</div>
+            <div style={{ color: "#4A4A5A", fontSize: 12, marginTop: 4 }}>{(file.size / 1024).toFixed(0)} KB</div>
           </div>
         ) : (
           <div>
-            <div style={{ color: "#444450", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>Drag file here or click to select</div>
-            <div style={{ color: "#888898", fontSize: 12, marginTop: 6 }}>Supports PDF, JPG, PNG</div>
+            <div style={{ color: "#1C1C28", fontFamily: "'DM Mono', monospace", fontSize: 14 }}>Drag file here or click to select</div>
+            <div style={{ color: "#9090A0", fontSize: 12, marginTop: 6 }}>Supports PDF, JPG, PNG</div>
           </div>
         )}
       </div>
-      {error && <div style={{ color: "#ff6b6b", fontSize: 13, marginTop: 12, fontFamily: "'DM Mono', monospace" }}>{error}</div>}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, marginTop: 20, marginBottom: 4, padding: "16px 12px", background: "rgba(0,0,0,0.06)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10 }}>
+      {error && <div style={{ color: "#CC3333", fontSize: 13, marginTop: 12, fontFamily: "'DM Mono', monospace" }}>{error}</div>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, marginTop: 20, marginBottom: 4, padding: "16px 12px", background: "#FFFFFF", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10 }}>
         {[
           { icon: "📄", label: "You upload", sub: "ticket or PDF" },
           { icon: "→", label: null, sub: null, arrow: true },
@@ -236,11 +236,11 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
           { icon: "→", label: null, sub: null, arrow: true },
           { icon: "💶", label: "You receive", sub: "money to your account" },
         ].map((s, i) => s.arrow
-          ? <div key={i} style={{ color: "#C8C6C0", fontSize: 18, padding: "0 4px" }}>→</div>
+          ? <div key={i} style={{ color: "#E0DCD4", fontSize: 18, padding: "0 4px" }}>→</div>
           : <div key={i} style={{ textAlign: "center", flex: 1 }}>
               <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", fontWeight: 700, letterSpacing: "0.05em" }}>{s.label}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#555560", marginTop: 2 }}>{s.sub}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#4A4A5A", marginTop: 2 }}>{s.sub}</div>
             </div>
         )}
       </div>
@@ -249,8 +249,8 @@ function UploadStep({ onNext, setTicketData, setExtractedInfo }) {
         disabled={!file || loading}
         style={{
           marginTop: 24, width: "100%", padding: "16px",
-          background: file && !loading ? "#C8A96E" : "#E8E6E0",
-          color: file && !loading ? "#F5F4F0" : "#AAAAAA",
+          background: file && !loading ? "#C8A96E" : "#F0EDE8",
+          color: file && !loading ? "#FAFAF8" : "#B0ADA8",
           border: "none", borderRadius: 8, cursor: file && !loading ? "pointer" : "not-allowed",
           fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700,
           letterSpacing: "0.05em", transition: "all 0.2s ease"
@@ -268,9 +268,9 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
   const autoFilled = (key) => extractedInfo?.[key] !== null && extractedInfo?.[key] !== undefined && extractedInfo?.[key] !== "";
   const fieldStyle = (key) => ({
     width: "100%", padding: "12px 14px",
-    background: autoFilled(key) ? "rgba(76,175,122,0.08)" : "#FFFFFF",
-    border: `1px solid ${autoFilled(key) ? "rgba(76,175,122,0.5)" : "#C8C6C0"}`,
-    borderRadius: 8, color: "#1a1a2a",
+    background: autoFilled(key) ? "#F0FAF4" : "#FFFFFF",
+    border: `1px solid ${autoFilled(key) ? "#A8D8B8" : "#E0DCD4"}`,
+    borderRadius: 8, color: "#1C1C28",
     fontFamily: "'DM Mono', monospace", fontSize: 14, outline: "none",
     boxSizing: "border-box", transition: "border-color 0.2s"
   });
@@ -281,18 +281,18 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
 
   return (
     <div>
-      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#1a1a2a", marginBottom: 8, fontWeight: 400 }}>
+      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#1C1C28", marginBottom: 8, fontWeight: 400 }}>
         Confirm journey details
       </h2>
       {autoCount > 0 ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(76,175,122,0.08)", border: "1px solid rgba(76,175,122,0.25)", borderRadius: 8, padding: "10px 14px", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#F0FAF4", border: "1px solid rgba(76,175,122,0.25)", borderRadius: 8, padding: "10px 14px", marginBottom: 24 }}>
           <span style={{ fontSize: 18 }}>✅</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#4CAF7A" }}>
             We read <strong>{autoCount} fields</strong> automatically from your ticket — check and correct if needed
           </span>
         </div>
       ) : (
-        <p style={{ color: "#555560", fontSize: 14, marginBottom: 24, fontFamily: "'DM Mono', monospace" }}>
+        <p style={{ color: "#4A4A5A", fontSize: 14, marginBottom: 24, fontFamily: "'DM Mono', monospace" }}>
           We could not read the ticket — please fill in manually
         </p>
       )}
@@ -300,9 +300,9 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {[{ label: "From", key: "fra", placeholder: "Departure station" }, { label: "To", key: "til", placeholder: "Destination station" }].map(({ label, key, placeholder }) => (
             <div key={key}>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#555560", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#4A4A5A", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 {label}
-                {autoFilled(key) && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
+                {autoFilled(key) && <span style={{ background: "#F0FAF4", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#2D8653", letterSpacing: "0.08em" }}>AUTO</span>}
               </label>
               <input value={extractedInfo?.[key] || ""} onChange={e => update(key, e.target.value)} placeholder={placeholder} style={fieldStyle(key)} />
             </div>
@@ -311,44 +311,44 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {[{ label: "Date", key: "dato", placeholder: "DD.MM.YYYY" }, { label: "Departure", key: "tidspunkt", placeholder: "HH:MM" }].map(({ label, key, placeholder }) => (
             <div key={key}>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#555560", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#4A4A5A", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 {label}
-                {autoFilled(key) && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
+                {autoFilled(key) && <span style={{ background: "#F0FAF4", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#2D8653", letterSpacing: "0.08em" }}>AUTO</span>}
               </label>
               <input value={extractedInfo?.[key] || ""} onChange={e => update(key, e.target.value)} placeholder={placeholder} style={fieldStyle(key)} />
             </div>
           ))}
         </div>
         <div>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#555560", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#4A4A5A", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
             Railway operator
-            {autoFilled("operatør") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
+            {autoFilled("operatør") && <span style={{ background: "#F0FAF4", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#2D8653", letterSpacing: "0.08em" }}>AUTO</span>}
           </label>
-          <select value={extractedInfo?.operatør || ""} onChange={e => update("operatør", e.target.value)} style={{ ...fieldStyle("operatør"), color: extractedInfo?.operatør ? "#1a1a2a" : "#888898" }}>
+          <select value={extractedInfo?.operatør || ""} onChange={e => update("operatør", e.target.value)} style={{ ...fieldStyle("operatør"), color: extractedInfo?.operatør ? "#1C1C28" : "#9090A0" }}>
             <option value="">Select operator...</option>
             {operators.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>
           <div>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#555560", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#4A4A5A", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>
               Ticket price
-              {autoFilled("billetpris") && <span style={{ background: "rgba(76,175,122,0.2)", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#4CAF7A", letterSpacing: "0.08em" }}>AUTO</span>}
+              {autoFilled("billetpris") && <span style={{ background: "#F0FAF4", border: "1px solid rgba(76,175,122,0.4)", borderRadius: 3, padding: "1px 5px", fontSize: 8, color: "#2D8653", letterSpacing: "0.08em" }}>AUTO</span>}
             </label>
             <input type="number" value={extractedInfo?.billetpris || ""} onChange={e => update("billetpris", parseFloat(e.target.value))} placeholder="0" style={fieldStyle("billetpris")} />
           </div>
           <div>
-            <label style={{ display: "block", color: "#555560", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>Valuta</label>
-            <select value={extractedInfo?.valuta || "DKK"} onChange={e => update("valuta", e.target.value)} style={{ ...fieldStyle("valuta"), color: "#1a1a2a" }}>
+            <label style={{ display: "block", color: "#4A4A5A", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 6, letterSpacing: "0.12em", textTransform: "uppercase" }}>Valuta</label>
+            <select value={extractedInfo?.valuta || "DKK"} onChange={e => update("valuta", e.target.value)} style={{ ...fieldStyle("valuta"), color: "#1C1C28" }}>
               {["DKK", "EUR", "GBP", "NOK", "SEK"].map(v => <option key={v}>{v}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label style={{ display: "block", color: "#555560", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 4, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+          <label style={{ display: "block", color: "#4A4A5A", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 4, letterSpacing: "0.12em", textTransform: "uppercase" }}>
             What was the delay? <span style={{ color: "#CC4444", fontSize: 10 }}>*</span>
           </label>
-          <div style={{ color: "#888898", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+          <div style={{ color: "#9090A0", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
             Measured from scheduled arrival to actual arrival at final destination
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
@@ -356,14 +356,14 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
               <button key={d.value} onClick={() => update("forsinkelse", d.value)} style={{
                 padding: "12px 8px", borderRadius: 8, cursor: "pointer",
                 background: extractedInfo?.forsinkelse === d.value
-                  ? (d.eligible ? "rgba(200,169,110,0.15)" : "rgba(255,107,107,0.1)")
+                  ? (d.eligible ? "#FFFBF0" : "#FFF5F5")
                   : "#FFFFFF",
                 border: `1px solid ${extractedInfo?.forsinkelse === d.value
                   ? (d.eligible ? "#C8A96E" : "#CC4444")
-                  : "#C8C6C0"}`,
+                  : "#E0DCD4"}`,
                 color: extractedInfo?.forsinkelse === d.value
                   ? (d.eligible ? "#C8A96E" : "#ff6b6b")
-                  : "#555560",
+                  : "#4A4A5A",
                 fontFamily: "'DM Mono', monospace", fontSize: 11, transition: "all 0.15s ease",
                 fontWeight: extractedInfo?.forsinkelse === d.value ? 700 : 400,
                 textAlign: "center"
@@ -374,19 +374,19 @@ function DetailsStep({ extractedInfo, setExtractedInfo, onNext, onBack }) {
             ))}
           </div>
           {extractedInfo?.forsinkelse === "under-60 min" && (
-            <div style={{ color: "#ff6b6b", fontSize: 11, marginTop: 8, fontFamily: "'DM Mono', monospace", background: "rgba(255,107,107,0.08)", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 6, padding: "8px 10px" }}>
+            <div style={{ color: "#CC3333", fontSize: 11, marginTop: 8, fontFamily: "'DM Mono', monospace", background: "#FFF5F5", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 6, padding: "8px 10px" }}>
               ❌ Delays under 60 minutes do not qualify for compensation under EU Regulation 2021/782, Art. 19
             </div>
           )}
         </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 24 }}>
-        <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #3a3a5e", borderRadius: 8, color: "#555560", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
+        <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #3a3a5e", borderRadius: 8, color: "#4A4A5A", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
           ← Tilbage
         </button>
         <button onClick={onNext} disabled={!canProceed} style={{
-          padding: "14px", background: canProceed ? "#C8A96E" : "#E8E6E0",
-          color: canProceed ? "#F5F4F0" : "#AAAAAA", border: "none", borderRadius: 8,
+          padding: "14px", background: canProceed ? "#C8A96E" : "#F0EDE8",
+          color: canProceed ? "#FAFAF8" : "#B0ADA8", border: "none", borderRadius: 8,
           cursor: canProceed ? "pointer" : "not-allowed",
           fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, transition: "all 0.2s ease"
         }}>
@@ -427,19 +427,19 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
 
   return (
     <div>
-      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#1a1a2a", marginBottom: 8, fontWeight: 400 }}>
+      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#1C1C28", marginBottom: 8, fontWeight: 400 }}>
         Vurdering
       </h2>
       <div style={{
-        background: eligible ? "rgba(76,175,122,0.08)" : "rgba(255,107,107,0.08)",
-        border: `1px solid ${eligible ? "rgba(76,175,122,0.3)" : "rgba(255,107,107,0.3)"}`,
+        background: eligible ? "#F0FAF4" : "#FFF5F5",
+        border: `1px solid ${eligible ? "#A8D8B8" : "#F0AAAA"}`,
         borderRadius: 12, padding: 24, marginBottom: 24
       }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>{eligible ? "✅" : "❌"}</div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#4CAF7A" : "#ff6b6b", marginBottom: 4 }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: eligible ? "#2D8653" : "#CC3333", marginBottom: 4 }}>
           {eligible ? "Based on the provided information, you may be eligible for compensation" : "Not eligible"}
         </div>
-        {!eligible && <div style={{ color: "#555560", fontSize: 13, fontFamily: "'DM Mono', monospace" }}>{reason}</div>}
+        {!eligible && <div style={{ color: "#4A4A5A", fontSize: 13, fontFamily: "'DM Mono', monospace" }}>{reason}</div>}
       </div>
       {eligible && (
         <>
@@ -450,17 +450,17 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
               { label: "You receive", value: `${youGet.toFixed(0)} ${currency}`, accent: true },
             ].map(({ label, value, accent }) => (
               <div key={label} style={{
-                background: accent ? "rgba(200,169,110,0.1)" : "#FFFFFF",
-                border: `1px solid ${accent ? "rgba(200,169,110,0.4)" : "#C8C6C0"}`,
+                background: accent ? "#FFFBF0" : "#FFFFFF",
+                border: `1px solid ${accent ? "#C8A96E" : "#E0DCD4"}`,
                 borderRadius: 10, padding: "16px 14px", textAlign: "center"
               }}>
-                <div style={{ color: "#888898", fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
-                <div style={{ color: accent ? "#C8A96E" : "#1a1a2a", fontSize: 18, fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>{value}</div>
+                <div style={{ color: "#9090A0", fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
+                <div style={{ color: accent ? "#C8A96E" : "#1C1C28", fontSize: 18, fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>{value}</div>
               </div>
             ))}
           </div>
           <div style={{ background: "#FFFFFF", border: "1px solid rgba(200,169,110,0.15)", borderRadius: 10, padding: 20, marginBottom: 24 }}>
-            <div style={{ color: "#555560", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 16, letterSpacing: "0.12em", textTransform: "uppercase" }}>What happens next?</div>
+            <div style={{ color: "#4A4A5A", fontSize: 10, fontFamily: "'DM Mono', monospace", marginBottom: 16, letterSpacing: "0.12em", textTransform: "uppercase" }}>What happens next?</div>
             {[
               { icon: "⚡", time: "Within 24 hours", desc: "We file your claim with the operator" },
               { icon: "⏳", time: "Up to 30 days", desc: "The operator has 30 days to respond" },
@@ -468,10 +468,10 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
               { icon: "💶", time: "Payout", desc: "Compensation transferred to your IBAN" },
             ].map((step, i, arr) => (
               <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: i < arr.length - 1 ? 14 : 0 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(200,169,110,0.12)", border: "1px solid rgba(200,169,110,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>{step.icon}</div>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#FFFBF0", border: "1px solid rgba(200,169,110,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>{step.icon}</div>
                 <div>
                   <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", fontWeight: 700, marginBottom: 1 }}>{step.time}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#555560" }}>{step.desc}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#4A4A5A" }}>{step.desc}</div>
                 </div>
               </div>
             ))}
@@ -479,12 +479,12 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
         </>
       )}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
-        <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #3a3a5e", borderRadius: 8, color: "#555560", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
+        <button onClick={onBack} style={{ padding: "14px", background: "transparent", border: "1px solid #3a3a5e", borderRadius: 8, color: "#4A4A5A", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
           ← Tilbage
         </button>
         {eligible && (
           <button onClick={onNext} style={{
-            padding: "14px", background: "#C8A96E", color: "#F5F4F0",
+            padding: "14px", background: "#C8A96E", color: "#FAFAF8",
             border: "none", borderRadius: 8, cursor: "pointer",
             fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700
           }}>
@@ -783,7 +783,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
     !name.trim().toLowerCase().includes(ticketName.trim().toLowerCase().split(" ")[0]);
 
   const mono = "'DM Mono', monospace";
-  const inp = { width:"100%", padding:"11px 13px", background:"#FFFFFF", border:"1px solid #3a3a5e", borderRadius:8, color:"#1a1a2a", fontFamily:mono, fontSize:13, outline:"none", boxSizing:"border-box" };
+  const inp = { width:"100%", padding:"11px 13px", background:"#FFFFFF", border:"1px solid #3a3a5e", borderRadius:8, color:"#1C1C28", fontFamily:mono, fontSize:13, outline:"none", boxSizing:"border-box" };
   const signed = signInput.trim().toLowerCase() === name.trim().toLowerCase() && name.trim().length > 0;
   const canGo = name.trim() && email.trim() && address.trim() && iban.trim() && ibanValidation.valid && agreed && gdprConsent;
 
@@ -828,26 +828,26 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   };
 
   const LabelEl = ({ children }) => (
-    <label style={{ display:"block", color:"#555560", fontSize:10, fontFamily:mono, marginBottom:5, letterSpacing:"0.1em", textTransform:"uppercase" }}>
+    <label style={{ display:"block", color:"#4A4A5A", fontSize:10, fontFamily:mono, marginBottom:5, letterSpacing:"0.1em", textTransform:"uppercase" }}>
       {children}
     </label>
   );
 
   if (subStep === "details") return (
     <div>
-      <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#1a1a2a", marginBottom:6, fontWeight:400 }}>Your details</h2>
-      <p style={{ color:"#555560", fontSize:13, marginBottom:22, fontFamily:mono }}>Used to complete the official EU form (2024/949)</p>
+      <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#1C1C28", marginBottom:6, fontWeight:400 }}>Your details</h2>
+      <p style={{ color:"#4A4A5A", fontSize:13, marginBottom:22, fontFamily:mono }}>Used to complete the official EU form (2024/949)</p>
       <div style={{ display:"grid", gap:14 }}>
         <div>
           <LabelEl>Full name *</LabelEl>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Frederik Hansen" style={inp} />
           {nameMismatch && (
-            <div style={{ color:"#C8A96E", fontSize:11, marginTop:5, fontFamily:mono, background:"rgba(200,169,110,0.08)", border:"1px solid rgba(200,169,110,0.25)", borderRadius:6, padding:"7px 10px" }}>
+            <div style={{ color:"#C8A96E", fontSize:11, marginTop:5, fontFamily:mono, background:"#FFFBF0", border:"1px solid rgba(200,169,110,0.25)", borderRadius:6, padding:"7px 10px" }}>
               ⚠ The name on your ticket appears to be "<strong>{ticketName}</strong>" — please confirm this is you, or correct the name above
             </div>
           )}
           {ticketName && !nameMismatch && name.trim().length > 2 && (
-            <div style={{ color:"#4CAF7A", fontSize:11, marginTop:4, fontFamily:mono }}>✓ Name matches ticket</div>
+            <div style={{ color:"#2D8653", fontSize:11, marginTop:4, fontFamily:mono }}>✓ Name matches ticket</div>
           )}
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
@@ -867,13 +867,13 @@ function FormStep({ extractedInfo, compensation, onBack }) {
                 if (result.valid && result.suggestedBic && !swift.trim()) setSwift(result.suggestedBic);
               }}
               placeholder="DK50 0040 0440 1162 43"
-              style={{ ...inp, borderColor: iban.length > 4 ? (ibanValidation.valid ? "#4CAF7A" : "#CC4444") : "#C8C6C0" }}
+              style={{ ...inp, borderColor: iban.length > 4 ? (ibanValidation.valid ? "#4CAF7A" : "#CC4444") : "#E0DCD4" }}
             />
             {iban.length > 4 && !ibanValidation.valid && ibanValidation.error && (
               <div style={{ color:"#CC4444", fontSize:11, marginTop:4, fontFamily:mono }}>✗ {ibanValidation.error}</div>
             )}
             {ibanValidation.valid && (
-              <div style={{ color:"#4CAF7A", fontSize:11, marginTop:4, fontFamily:mono }}>✓ Valid IBAN{ibanValidation.country ? " — " + ibanValidation.country : ""}</div>
+              <div style={{ color:"#2D8653", fontSize:11, marginTop:4, fontFamily:mono }}>✓ Valid IBAN{ibanValidation.country ? " — " + ibanValidation.country : ""}</div>
             )}
           </div>
         </div>
@@ -881,7 +881,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
           <div>
             <LabelEl>SWIFT/BIC *</LabelEl>
             <input value={swift} onChange={e => setSwift(e.target.value)} placeholder={ibanValidation.suggestedBic || "DABADKKK"}
-              style={{ ...inp, borderColor: swift.trim().length >= 8 ? "#4CAF7A" : "#C8C6C0" }} />
+              style={{ ...inp, borderColor: swift.trim().length >= 8 ? "#4CAF7A" : "#E0DCD4" }} />
             {ibanValidation.valid && !swift.trim() && (
               <div style={{ color:"#CC4444", fontSize:11, marginTop:4, fontFamily:mono }}>Required for wire transfer</div>
             )}
@@ -897,50 +897,50 @@ function FormStep({ extractedInfo, compensation, onBack }) {
             <input value={address} onChange={e => setAddress(e.target.value)} placeholder="1 Main Street, London SW1A 1AA" style={inp} />
           </div>
         </div>
-        <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px" }}>
+        <div style={{ background:"#FFFBF0", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px" }}>
           <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10, letterSpacing:"0.08em" }}>WE GENERATE 2 DOCUMENTS</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
             <div style={{ background:"#FFFFFF", borderRadius:8, padding:"10px 12px" }}>
               <div style={{ fontSize:20, marginBottom:4 }}>📄</div>
-              <div style={{ fontFamily:mono, fontSize:11, color:"#1a1a2a", fontWeight:700 }}>EU-blanket 2024/949</div>
-              <div style={{ fontFamily:mono, fontSize:10, color:"#555560", marginTop:3 }}>Officiel EU-formular, auto-udfyldt</div>
+              <div style={{ fontFamily:mono, fontSize:11, color:"#1C1C28", fontWeight:700 }}>EU-blanket 2024/949</div>
+              <div style={{ fontFamily:mono, fontSize:10, color:"#4A4A5A", marginTop:3 }}>Officiel EU-formular, auto-udfyldt</div>
             </div>
             <div style={{ background:"#FFFFFF", borderRadius:8, padding:"10px 12px" }}>
               <div style={{ fontSize:20, marginBottom:4 }}>✍️</div>
-              <div style={{ fontFamily:mono, fontSize:11, color:"#1a1a2a", fontWeight:700 }}>Fuldmagt</div>
-              <div style={{ fontFamily:mono, fontSize:10, color:"#555560", marginTop:3 }}>Bemyndiger os til at indsende</div>
+              <div style={{ fontFamily:mono, fontSize:11, color:"#1C1C28", fontWeight:700 }}>Fuldmagt</div>
+              <div style={{ fontFamily:mono, fontSize:10, color:"#4A4A5A", marginTop:3 }}>Bemyndiger os til at indsende</div>
             </div>
           </div>
         </div>
         <div onClick={() => setGdprConsent(a => !a)}
           style={{ display:"flex", gap:10, cursor:"pointer", alignItems:"flex-start", padding:"12px",
-            background: gdprConsent ? "rgba(76,175,122,0.07)" : "#FFFFFF",
-            border: `1px solid ${gdprConsent ? "rgba(76,175,122,0.4)" : "#C8C6C0"}`,
+            background: gdprConsent ? "#F0FAF4" : "#FFFFFF",
+            border: `1px solid ${gdprConsent ? "#A8D8B8" : "#E0DCD4"}`,
             borderRadius:8, transition:"all 0.2s" }}>
-          <div style={{ width:16, height:16, border: `2px solid ${gdprConsent ? "#4CAF7A" : "#888898"}`, borderRadius:3, background: gdprConsent ? "#4CAF7A" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {gdprConsent && <span style={{ color:"white", fontSize:10, fontWeight:700 }}>✓</span>}
+          <div style={{ width:16, height:16, border: `2px solid ${gdprConsent ? "#2D8653" : "#E0DCD4"}`, borderRadius:3, background: gdprConsent ? "#2D8653" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {gdprConsent && <span style={{ color:"#FFFFFF", fontSize:10, fontWeight:700 }}>✓</span>}
           </div>
-          <span style={{ fontFamily:mono, fontSize:11, color:"#444450", lineHeight:1.6 }}>
-            🔒 <strong style={{ color:"#1a1a2a" }}>GDPR Consent:</strong> I agree that my personal data (name, email, address, IBAN and ticket) is processed by EU Rail Refund ApS solely for the purpose of this claim, pursuant to EU Regulation 2016/679 (GDPR). Data is deleted within 90 days of completion.
+          <span style={{ fontFamily:mono, fontSize:11, color:"#1C1C28", lineHeight:1.6 }}>
+            🔒 <strong style={{ color:"#1C1C28" }}>GDPR Consent:</strong> I agree that my personal data (name, email, address, IBAN and ticket) is processed by EU Rail Refund ApS solely for the purpose of this claim, pursuant to EU Regulation 2016/679 (GDPR). Data is deleted within 90 days of completion.
           </span>
         </div>
         <div onClick={() => setAgreed(a => !a)}
           style={{ display:"flex", gap:10, cursor:"pointer", alignItems:"flex-start", padding:"12px",
-            background: agreed ? "rgba(76,175,122,0.07)" : "#FFFFFF",
-            border: `1px solid ${agreed ? "rgba(76,175,122,0.4)" : "#C8C6C0"}`,
+            background: agreed ? "#F0FAF4" : "#FFFFFF",
+            border: `1px solid ${agreed ? "#A8D8B8" : "#E0DCD4"}`,
             borderRadius:8, transition:"all 0.2s" }}>
-          <div style={{ width:16, height:16, border: `2px solid ${agreed ? "#4CAF7A" : "#888898"}`, borderRadius:3, background: agreed ? "#4CAF7A" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {agreed && <span style={{ color:"white", fontSize:10, fontWeight:700 }}>✓</span>}
+          <div style={{ width:16, height:16, border: `2px solid ${agreed ? "#2D8653" : "#E0DCD4"}`, borderRadius:3, background: agreed ? "#2D8653" : "transparent", flexShrink:0, marginTop:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {agreed && <span style={{ color:"#FFFFFF", fontSize:10, fontWeight:700 }}>✓</span>}
           </div>
-          <span style={{ fontFamily:mono, fontSize:11, color:"#444450", lineHeight:1.6 }}>
+          <span style={{ fontFamily:mono, fontSize:11, color:"#1C1C28", lineHeight:1.6 }}>
             ✅ I confirm I am the named passenger on this ticket and authorise EU Rail Refund ApS to file the claim on my behalf. I accept a 25% fee on success — no payment if the claim is rejected.
           </span>
         </div>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:12, marginTop:20 }}>
-        <button onClick={onBack} style={{ padding:"13px", background:"transparent", border:"1px solid #3a3a5e", borderRadius:8, color:"#555560", cursor:"pointer", fontFamily:mono, fontSize:13 }}>← Back</button>
+        <button onClick={onBack} style={{ padding:"13px", background:"transparent", border:"1px solid #3a3a5e", borderRadius:8, color:"#4A4A5A", cursor:"pointer", fontFamily:mono, fontSize:13 }}>← Back</button>
         <button onClick={() => setSubStep("sign")} disabled={!canGo}
-          style={{ padding:"13px", background: canGo ? "#C8A96E" : "#E8E6E0", color: canGo ? "#F5F4F0" : "#AAAAAA", border:"none", borderRadius:8, cursor: canGo ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700, transition:"all 0.2s" }}>
+          style={{ padding:"13px", background: canGo ? "#C8A96E" : "#F0EDE8", color: canGo ? "#FAFAF8" : "#B0ADA8", border:"none", borderRadius:8, cursor: canGo ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700, transition:"all 0.2s" }}>
           Continue to signature →
         </button>
       </div>
@@ -949,36 +949,36 @@ function FormStep({ extractedInfo, compensation, onBack }) {
 
   if (subStep === "sign") return (
     <div>
-      <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#1a1a2a", marginBottom:6, fontWeight:400 }}>Digital signature</h2>
-      <p style={{ color:"#555560", fontSize:13, marginBottom:20, fontFamily:mono }}>Type your name to sign both documents</p>
-      <div style={{ background:"#F5F4F0", border:"1px solid #3a3a5e", borderRadius:10, padding:18, marginBottom:20 }}>
-        <div style={{ fontFamily:mono, fontSize:10, color:"#555560", marginBottom:12, letterSpacing:"0.1em" }}>DU UNDERSKRIVER</div>
+      <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#1C1C28", marginBottom:6, fontWeight:400 }}>Digital signature</h2>
+      <p style={{ color:"#4A4A5A", fontSize:13, marginBottom:20, fontFamily:mono }}>Type your name to sign both documents</p>
+      <div style={{ background:"#FAFAF8", border:"1px solid #3a3a5e", borderRadius:10, padding:18, marginBottom:20 }}>
+        <div style={{ fontFamily:mono, fontSize:10, color:"#4A4A5A", marginBottom:12, letterSpacing:"0.1em" }}>DU UNDERSKRIVER</div>
         {[
           ["📄 EU-blanket (2024/949)", "Kompensationskrav: " + compensation.compensation.toFixed(0) + " " + extractedInfo.valuta],
           ["✍️ Fuldmagt til EU Rail Refund ApS", extractedInfo.fra + " → " + extractedInfo.til + " · " + extractedInfo.dato],
         ].map(([title, sub]) => (
           <div key={title} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:"1px solid #1a1a2e" }}>
             <div>
-              <div style={{ fontFamily:mono, fontSize:12, color:"#1a1a2a" }}>{title}</div>
-              <div style={{ fontFamily:mono, fontSize:10, color:"#555560", marginTop:2 }}>{sub}</div>
+              <div style={{ fontFamily:mono, fontSize:12, color:"#1C1C28" }}>{title}</div>
+              <div style={{ fontFamily:mono, fontSize:10, color:"#4A4A5A", marginTop:2 }}>{sub}</div>
             </div>
-            <div style={{ color: signed ? "#4CAF7A" : "#888898", fontSize:20 }}>{signed ? "✓" : "○"}</div>
+            <div style={{ color: signed ? "#4CAF7A" : "#9090A0", fontSize:20 }}>{signed ? "✓" : "○"}</div>
           </div>
         ))}
       </div>
       <div style={{ marginBottom:20 }}>
         <LabelEl>Type your full name as signature *</LabelEl>
         <input value={signInput} onChange={e => setSignInput(e.target.value)} placeholder="Skriv dit fulde navn..."
-          style={{ ...inp, fontSize:16, fontFamily:"'Playfair Display', serif", borderColor: signed ? "rgba(76,175,122,0.5)" : "#C8C6C0", background: signed ? "rgba(76,175,122,0.05)" : "#FFFFFF" }} />
-        <div style={{ fontFamily:mono, fontSize:10, color:"#888898", marginTop:6 }}>
+          style={{ ...inp, fontSize:16, fontFamily:"'Playfair Display', serif", borderColor: signed ? "#A8D8B8" : "#E0DCD4", background: signed ? "#F0FAF4" : "#FFFFFF" }} />
+        <div style={{ fontFamily:mono, fontSize:10, color:"#9090A0", marginTop:6 }}>
           Your typed name serves as a legal digital signature on both documents.
         </div>
       </div>
       {error && <div style={{ color:"#ff6b6b", fontFamily:mono, fontSize:12, marginBottom:12 }}>{error}</div>}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:12 }}>
-        <button onClick={() => setSubStep("details")} style={{ padding:"13px", background:"transparent", border:"1px solid #3a3a5e", borderRadius:8, color:"#555560", cursor:"pointer", fontFamily:mono, fontSize:13 }}>← Back</button>
+        <button onClick={() => setSubStep("details")} style={{ padding:"13px", background:"transparent", border:"1px solid #3a3a5e", borderRadius:8, color:"#4A4A5A", cursor:"pointer", fontFamily:mono, fontSize:13 }}>← Back</button>
         <button onClick={doGenerate} disabled={!signed || loading}
-          style={{ padding:"13px", background: signed && !loading ? "#C8A96E" : "#E8E6E0", color: signed && !loading ? "#F5F4F0" : "#AAAAAA", border:"none", borderRadius:8, cursor: signed ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700 }}>
+          style={{ padding:"13px", background: signed && !loading ? "#C8A96E" : "#F0EDE8", color: signed && !loading ? "#FAFAF8" : "#B0ADA8", border:"none", borderRadius:8, cursor: signed ? "pointer" : "not-allowed", fontFamily:mono, fontSize:13, fontWeight:700 }}>
           {loading ? "⟳  Genererer PDFer..." : "✍️  Underskriv og download PDF →"}
         </button>
       </div>
@@ -988,14 +988,14 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   return (
     <div style={{ textAlign:"center", padding:"10px 0" }}>
       <div style={{ fontSize:52, marginBottom:16 }}>🎉</div>
-      <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#1a1a2a", marginBottom:10, fontWeight:400 }}>You're all set!</h2>
-      <p style={{ fontFamily:mono, fontSize:13, color:"#555560", marginBottom:20, lineHeight:1.8 }}>
+      <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, color:"#1C1C28", marginBottom:10, fontWeight:400 }}>You're all set!</h2>
+      <p style={{ fontFamily:mono, fontSize:13, color:"#4A4A5A", marginBottom:20, lineHeight:1.8 }}>
         Your documents are ready. We will file everything on your behalf — you don't need to do anything else.
       </p>
 
-      <div style={{ background:"rgba(200,169,110,0.07)", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left" }}>
+      <div style={{ background:"#FFFBF0", border:"1px solid rgba(200,169,110,0.2)", borderRadius:10, padding:"14px 16px", textAlign:"left" }}>
         <div style={{ fontFamily:mono, fontSize:11, color:"#C8A96E", marginBottom:10 }}>WHAT HAPPENS NEXT</div>
-        <div style={{ fontFamily:mono, fontSize:12, color:"#444450", lineHeight:2 }}>
+        <div style={{ fontFamily:mono, fontSize:12, color:"#1C1C28", lineHeight:2 }}>
           1. We file your claim with the operator within 24 hours<br/>
           2. The operator has 30 days to respond (EU Reg. 2021/782)<br/>
           3. If no reply — we escalate automatically on your behalf<br/>
@@ -1015,43 +1015,43 @@ export default function App() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#F5F4F0",
-      backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(200,169,110,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(76,100,175,0.08) 0%, transparent 60%)",
+      minHeight: "100vh", background: "#FAFAF8",
+      backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(200,169,110,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(200,169,110,0.03) 0%, transparent 60%)",
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "24px 16px", fontFamily: "system-ui", position: "relative", overflow: "hidden"
     }}>
-      <div style={{ position: "fixed", inset: 0, opacity: 0.04, pointerEvents: "none" }}>
+      <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none" }}>
         {[...Array(8)].map((_, i) => (
           <div key={i} style={{ position: "absolute", left: `${i * 14}%`, top: 0, bottom: 0, width: 1, background: "#C8A96E", transform: `rotate(${i % 2 === 0 ? 5 : -5}deg)` }} />
         ))}
       </div>
       <div style={{ width: "100%", maxWidth: 520, position: "relative" }}>
         <div style={{ marginBottom: 32, textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(200,169,110,0.08)", border: "1px solid rgba(200,169,110,0.2)", borderRadius: 100, padding: "6px 16px", marginBottom: 20 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#F7F6F3", border: "1px solid #E8E4DC", borderRadius: 100, padding: "6px 16px", marginBottom: 20 }}>
             <span style={{ fontSize: 16 }}>🚆</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase" }}>EU Rail Refund</span>
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#1a1a2a", margin: 0, fontWeight: 400, lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 42, color: "#1C1C28", margin: 0, fontWeight: 400, lineHeight: 1.15 }}>
             Get your money<br /><em style={{ color: "#C8A96E" }}>back</em>
           </h1>
-          <p style={{ color: "#888898", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
+          <p style={{ color: "#9090A0", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
             POWERED BY EU REGULATION 1371/2007
           </p>
         </div>
-        <div style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "32px", backdropFilter: "blur(20px)", boxShadow: "0 8px 40px rgba(0,0,0,0.10)" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "40px", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
           <ProgressBar step={step} />
           {step === "upload" && <UploadStep onNext={() => goTo("details")} setTicketData={setTicketData} setExtractedInfo={setExtractedInfo} />}
           {step === "details" && <DetailsStep extractedInfo={extractedInfo} setExtractedInfo={setExtractedInfo} onNext={() => goTo("result")} onBack={() => goTo("upload")} />}
           {step === "result" && <ResultStep extractedInfo={extractedInfo} onNext={() => goTo("form")} onBack={() => goTo("details")} setCompensation={setCompensation} />}
           {step === "form" && <FormStep extractedInfo={extractedInfo} compensation={compensation} onBack={() => goTo("result")} />}
         </div>
-        <div style={{ marginTop: 32, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "24px 28px" }}>
+        <div style={{ marginTop: 32, background: "#F7F6F3", border: "1px solid #E8E4DC", borderRadius: 12, padding: "24px 28px" }}>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 12 }}>About EU Rail Refund</div>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#555560", lineHeight: 1.9, margin: 0 }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#4A4A5A", lineHeight: 1.9, margin: 0 }}>
             EU Rail Refund is a Danish-based claims service that handles train delay compensation on your behalf under EU Regulation 2021/782. We prepare the official documentation, file directly with the operator, and chase the claim so you don't have to. Our fee is 25% of the compensation received — if the claim is rejected, you pay nothing. We operate across Denmark, Germany, France, the Netherlands, Austria, Italy, Spain, and the UK.
           </p>
         </div>
-        <p style={{ textAlign: "center", color: "#2a2a3a", fontSize: 11, fontFamily: "'DM Mono', monospace", marginTop: 20 }}>
+        <p style={{ textAlign: "center", color: "#B0ADA8", fontSize: 11, fontFamily: "'DM Mono', monospace", marginTop: 20 }}>
           We take 25% of the compensation — nothing to pay if we don't win
         </p>
       </div>
@@ -1067,9 +1067,9 @@ export default function App() {
         input, select { transition: border-color 0.2s ease; }
         input:focus, select:focus { border-color: #C8A96E !important; }
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #16162e; }
-        ::-webkit-scrollbar-thumb { background: #3a3a5e; border-radius: 2px; }
-        option { background: #16162e; }
+        ::-webkit-scrollbar-track { background: #F0EDE8; }
+        ::-webkit-scrollbar-thumb { background: #E0DCD4; border-radius: 2px; }
+        option { background: #FFFFFF; }
       `}</style>
     </div>
   );
