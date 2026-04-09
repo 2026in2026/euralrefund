@@ -211,6 +211,19 @@ Hvis du ikke kan finde et felt, sæt det til null. Returner altid bekræftet: tr
       <p style={{ color: "#4A4A5A", fontSize: 14, marginBottom: 8, fontFamily: "'DM Mono', monospace" }}>
         PDF or image — we read the details automatically
       </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+        {[
+          { icon: "📎", step: "1", title: "Upload ticket", desc: "We read your journey details automatically" },
+          { icon: "⚡", step: "2", title: "We file for you", desc: "Official EU form sent to operator within 24h" },
+          { icon: "💰", step: "3", title: "You get paid", desc: "75% wired to your IBAN on approval" },
+        ].map(({ icon, step, title, desc }) => (
+          <div key={step} style={{ background: "#F7F6F3", border: "1px solid #E8E4DC", borderRadius: 10, padding: "12px 10px", textAlign: "center" }}>
+            <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#1C1C28", marginBottom: 3 }}>{title}</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#9090A0", lineHeight: 1.5 }}>{desc}</div>
+          </div>
+        ))}
+      </div>
       <div style={{ background: "#FFFBF0", border: "1px solid #E8D090", borderRadius: 8, padding: "8px 12px", marginBottom: 20, fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E" }}>
         ⚠ Ticket upload is required to file a claim — this verifies your journey
       </div>
@@ -1081,7 +1094,7 @@ export default function App() {
       background: "#FAFAF8",
       backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(200,169,110,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(200,169,110,0.03) 0%, transparent 60%)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "24px 16px", fontFamily: "system-ui",
+      padding: "16px 12px", fontFamily: "system-ui",
       position: "relative", overflow: "hidden"
     }}>
       <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none" }}>
@@ -1095,7 +1108,10 @@ export default function App() {
             <span style={{ fontSize: 16 }}>🚆</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase" }}>EU Rail Refund</span>
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 42, color: "#1C1C28", margin: 0, fontWeight: 400, lineHeight: 1.15 }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#9090A0", marginTop: 8 }}>
+            Questions? <a href="mailto:support@euralrefund.com" style={{ color: "#C8A96E", textDecoration: "none" }}>support@euralrefund.com</a>
+          </div>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 6vw, 42px)", color: "#1C1C28", margin: 0, fontWeight: 400, lineHeight: 1.15 }}>
             Get your money<br /><em style={{ color: "#C8A96E" }}>back</em>
           </h1>
           <p style={{ color: "#9090A0", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
@@ -1105,7 +1121,7 @@ export default function App() {
         <div style={{
           background: "#FFFFFF",
           border: "1px solid #E8E4DC",
-          borderRadius: 20, padding: "40px",
+          borderRadius: 20, padding: "clamp(20px, 5vw, 40px)",
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)"
         }}>
           <ProgressBar step={step} />
@@ -1114,11 +1130,35 @@ export default function App() {
           {step === "result" && <ResultStep extractedInfo={extractedInfo} onNext={() => goTo("form")} onBack={() => goTo("details")} setCompensation={setCompensation} />}
           {step === "form" && <FormStep extractedInfo={extractedInfo} compensation={compensation} onBack={() => goTo("result")} />}
         </div>
-        <div style={{ marginTop: 32, background: "#F7F6F3", border: "1px solid #E8E4DC", borderRadius: 12, padding: "24px 28px" }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 12 }}>About EU Rail Refund</div>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#4A4A5A", lineHeight: 1.9, margin: 0 }}>
-            EU Rail Refund is a Danish-based claims service that handles train delay compensation on your behalf under EU Regulation 2021/782. We prepare the official documentation, file directly with the operator, and chase the claim so you don't have to. Our fee is 25% of the compensation received — if the claim is rejected, you pay nothing. We operate across Denmark, Germany, France, the Netherlands, Austria, Italy, Spain, and the UK.
-          </p>
+        <div style={{ marginTop: 28, background: "#FFFFFF", border: "1px solid #E8E4DC", borderRadius: 16, padding: "28px 28px 24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24, marginBottom: 20 }}>
+            <div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>About EU Rail Refund</div>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#4A4A5A", lineHeight: 1.9, margin: 0 }}>
+                EU Rail Refund is a Danish-registered claims service that handles train delay compensation on your behalf under EU Regulation 2021/782. We prepare the official documentation, file directly with the operator, and chase the claim so you don’t have to. Our fee is 25% of the compensation received — if the claim is rejected, you pay nothing.
+              </p>
+            </div>
+            <div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>Company Details</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#4A4A5A", lineHeight: 2.2 }}>
+                <div>EU Rail Refund ApS</div>
+                <div>CVR: 12345678</div>
+                <div>Strandvejen 100, 2900 Hellerup</div>
+                <div>Denmark</div>
+                <div><a href="mailto:support@euralrefund.com" style={{ color: "#C8A96E", textDecoration: "none" }}>support@euralrefund.com</a></div>
+              </div>
+            </div>
+          </div>
+          <div style={{ borderTop: "1px solid #E8E4DC", paddingTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#9090A0" }}>
+              We operate across Denmark, Germany, France, Netherlands, Austria, Italy, Spain and the UK
+            </div>
+            <div style={{ display: "flex", gap: 16 }}>
+              <a href="/privacy" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#C8A96E", textDecoration: "none" }}>Privacy Policy</a>
+              <a href="/terms" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#C8A96E", textDecoration: "none" }}>Terms &amp; Conditions</a>
+              <a href="mailto:support@euralrefund.com" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#C8A96E", textDecoration: "none" }}>Contact</a>
+            </div>
+          </div>
         </div>
         <p style={{ textAlign: "center", color: "#B0ADA8", fontSize: 11, fontFamily: "'DM Mono', monospace", marginTop: 20 }}>
           We take 25% of the compensation — nothing to pay if we don't win
@@ -1139,6 +1179,13 @@ export default function App() {
         ::-webkit-scrollbar-track { background: #181830; }
         ::-webkit-scrollbar-thumb { background: #3a3a5e; border-radius: 2px; }
         option { background: #FFFFFF; }
+  @media (max-width: 600px) {
+    [style*='gridTemplateColumns: "1fr 1fr"'] { grid-template-columns: 1fr !important; }
+    [style*='gridTemplateColumns: "2fr 1fr"'] { grid-template-columns: 1fr !important; }
+    [style*='gridTemplateColumns: "1fr 2fr"'] { grid-template-columns: 1fr !important; }
+    [style*='gridTemplateColumns: "repeat(3, 1fr)"'] { grid-template-columns: 1fr 1fr !important; }
+    [style*='gridTemplateColumns: "1fr 1fr 1fr"'] { grid-template-columns: 1fr !important; }
+  }
       `}</style>
     </div>
   );
