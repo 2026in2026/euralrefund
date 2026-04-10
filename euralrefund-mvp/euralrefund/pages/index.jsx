@@ -838,36 +838,65 @@ function FormStep({ extractedInfo, compensation, onBack }) {
     try {
       const euBytes = await generateEUFormPdf({
         info: {
-          fra: extractedInfo.fra,
-          til: extractedInfo.til,
-          dato: extractedInfo.dato,
-          tidspunkt: extractedInfo.tidspunkt,
+          fra: extractedInfo.fra, til: extractedInfo.til,
+          dato: extractedInfo.dato, tidspunkt: extractedInfo.tidspunkt,
           forsinkelse: extractedInfo.forsinkelse,
           operatør: extractedInfo.operatør || "",
           billetpris: extractedInfo.billetpris,
           valuta: extractedInfo.valuta || "DKK",
         },
-        comp: compensation,
-        name, email, address, iban
+        comp: compensation, name, email, address, iban
       });
       const fuldmagtBytes = await generateFuldmagtPdf({
         info: {
-          fra: extractedInfo.fra,
-          til: extractedInfo.til,
-          dato: extractedInfo.dato,
-          forsinkelse: extractedInfo.forsinkelse,
+          fra: extractedInfo.fra, til: extractedInfo.til,
+          dato: extractedInfo.dato, forsinkelse: extractedInfo.forsinkelse,
           operatør: extractedInfo.operatør || "",
           billetpris: extractedInfo.billetpris,
           valuta: extractedInfo.valuta || "DKK",
         },
-        comp: compensation,
-        name, email, address
+        comp: compensation, name, email, address
       });
-      await downloadPdf(euBytes, "EU-blanket-togkompensation.pdf");
-      setTimeout(() => downloadPdf(fuldmagtBytes, "Fuldmagt-EU-Rail-Refund.pdf"), 800);
+
+      // Convert to base64 for email attachment
+      const toBase64 = (bytes) => {
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+      };
+
+      // Submit to API — sends emails to you and the user
+      const res = await fetch('/api/submit-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          person: { navn: name, email, adresse: address, iban, swift },
+          info: {
+            fra: extractedInfo.fra, til: extractedInfo.til,
+            dato: extractedInfo.dato, forsinkelse: extractedInfo.forsinkelse,
+            operatør: extractedInfo.operatør || "",
+            billetpris: extractedInfo.billetpris,
+            valuta: extractedInfo.valuta || "DKK",
+          },
+          comp: {
+            compensation: compensation.compensation.toFixed(2),
+            ourFee: compensation.ourFee.toFixed(2),
+            youGet: compensation.youGet.toFixed(2),
+          },
+          euPdf: toBase64(euBytes),
+          fuldmagtPdf: toBase64(fuldmagtBytes),
+        })
+      });
+
+      if (!res.ok) throw new Error('Submission failed — please try again');
+
+      // Also download PDFs locally for the user
+      await downloadPdf(euBytes, "EU-claim-form.pdf");
+      setTimeout(() => downloadPdf(fuldmagtBytes, "PowerOfAttorney.pdf"), 800);
+
       setSubStep("done");
     } catch(e) {
-      setError("Error generating documents: " + e.message);
+      setError("Error: " + e.message);
     } finally {
       setLoading(false);
     }
