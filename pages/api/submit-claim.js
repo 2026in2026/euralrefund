@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }));
 
   // Store in claim log (accessible via /api/claims-log)
-  storeClaim({
+  await storeClaim({
     ref: `ERR-${Date.now().toString(36).toUpperCase()}`,
     timestamp: new Date().toISOString(),
     name, email, address, iban,
