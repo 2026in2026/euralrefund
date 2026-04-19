@@ -1081,7 +1081,7 @@ export default function App() {
             Get your money<br /><em style={{ color: "#C8A96E" }}>back</em>
           </h1>
           <p style={{ color: "#9090A0", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
-            POWERED BY EU REGULATION 1371/2007
+            POWERED BY EU REGULATION 2021/782
           </p>
         </div>
         <div style={{ background: "#FFFFFF", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "clamp(20px, 5vw, 40px)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
