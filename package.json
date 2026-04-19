@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "14.2.3",
+    "@vercel/kv": "^1.0.1",    "@vercel/kv": "^1.0.1",    "next": "14.2.3",    "resend": "^3.2.0",
     "pdf-lib": "^1.17.1",
     "react": "^18",
     "react-dom": "^18"
