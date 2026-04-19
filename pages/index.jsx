@@ -1044,7 +1044,7 @@ function FormStep({ extractedInfo, compensation, onBack }) {
           3. If no reply — we escalate automatically on your behalf<br/>
           4. Once approved, we transfer 75% directly to your IBAN
         </div>
-      </div>#b0b0cc
+      </div>
     </div>
   );
 }
