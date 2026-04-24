@@ -441,7 +441,7 @@ function ResultStep({ extractedInfo, onNext, onBack, setCompensation }) {
   return (
     <div>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#1C1C28", marginBottom: 8, fontWeight: 400 }}>
-        Vurdering
+        Assessment
       </h2>
       <div style={{
         background: eligible ? "#F0FAF4" : "#FFF5F5",
