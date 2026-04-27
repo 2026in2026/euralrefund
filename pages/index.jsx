@@ -128,6 +128,7 @@ function ProgressBar({ step }) {
         );
       })}
     </div>
+  </div>
   );
 }
 
@@ -1250,6 +1251,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        </div>
 
         {/* RIGHT — wizard */}
         <div className="hero-right" id="claim-form">
@@ -1308,7 +1310,5 @@ export default function App() {
           </div>
         </div>
     </div>
-  </div>
-  </div>
   );
 }
