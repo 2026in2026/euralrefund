@@ -1049,41 +1049,211 @@ function FormStep({ extractedInfo, compensation, onBack }) {
   );
 }
 
+
+// --- Hero Components ---
+const routes = [
+  { from: "Amsterdam", to: "Berlin", delay: "94 min", amount: "€187" },
+  { from: "Paris", to: "Brussels", delay: "61 min", amount: "€112" },
+  { from: "Copenhagen", to: "Hamburg", delay: "78 min", amount: "€150" },
+  { from: "Vienna", to: "Munich", delay: "120 min", amount: "€225" },
+  { from: "Milan", to: "Zurich", delay: "55 min", amount: "€98" },
+];
+
+const TICKER_ITEMS = "EU Regulation 2021/782 • No Win, No Fee • 75% directly to your IBAN • Official EU form filed within 24h • Denmark, Germany, France, Netherlands, Austria, Italy, Spain • ";
+
+function ClockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function ArrowRight() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+function TrainLines() {
+  return (
+    <svg
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.04 }}
+      preserveAspectRatio="none"
+      viewBox="0 0 800 600"
+    >
+      {[...Array(8)].map((_, i) => (
+        <line key={i} x1={-50} y1={i * 90 - 20} x2={850} y2={i * 90 + 40} stroke="white" strokeWidth="1" />
+      ))}
+      {[...Array(5)].map((_, i) => (
+        <line key={`v${i}`} x1={i * 200} y1={0} x2={i * 200 + 100} y2={600} stroke="white" strokeWidth="0.5" />
+      ))}
+    </svg>
+  );
+}
+
 export default function App() {
   const [step, setStep] = useState("upload");
   const [ticketData, setTicketData] = useState(null);
-  const [extractedInfo, setExtractedInfo] = useState({});
+  const [extractedInfo, setExtractedInfo] = useState(null);
   const [compensation, setCompensation] = useState(null);
+  const [activeRoute, setActiveRoute] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [tickerPos, setTickerPos] = useState(0);
+
   const goTo = (s) => setStep(s);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimating(true);
+      setTimeout(() => {
+        setActiveRoute((prev) => (prev + 1) % routes.length);
+        setAnimating(false);
+      }, 400);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let pos = 0;
+    const ticker = setInterval(() => {
+      pos -= 1;
+      if (pos < -800) pos = 0;
+      setTickerPos(pos);
+    }, 20);
+    return () => clearInterval(ticker);
+  }, []);
+
+  const route = routes[activeRoute];
+
   return (
-    <div style={{
-      minHeight: "100vh", background: "#FAFAF8",
-      backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(200,169,110,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(200,169,110,0.03) 0%, transparent 60%)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "16px 12px", fontFamily: "system-ui", position: "relative", overflow: "hidden"
-    }}>
-      <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none" }}>
-        {[...Array(8)].map((_, i) => (
-          <div key={i} style={{ position: "absolute", left: `${i * 14}%`, top: 0, bottom: 0, width: 1, background: "#C8A96E", transform: `rotate(${i % 2 === 0 ? 5 : -5}deg)` }} />
-        ))}
-      </div>
-      <div style={{ width: "100%", maxWidth: 520, position: "relative" }}>
-        <div style={{ marginBottom: 32, textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#F7F6F3", border: "1px solid #E8E4DC", borderRadius: 100, padding: "6px 16px", marginBottom: 20 }}>
-            <span style={{ fontSize: 16 }}>🚆</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#C8A96E", letterSpacing: "0.15em", textTransform: "uppercase" }}>EU Rail Refund</span>
-          </div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#9090A0", marginTop: 8 }}>
-            Questions? <a href="mailto:support@euralrefund.com" style={{ color: "#C8A96E", textDecoration: "none" }}>support@euralrefund.com</a>
-          </div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 6vw, 42px)", color: "#1C1C28", margin: 0, fontWeight: 400, lineHeight: 1.15 }}>
-            Get your money<br /><em style={{ color: "#C8A96E" }}>back</em>
-          </h1>
-          <p style={{ color: "#9090A0", fontFamily: "'DM Mono', monospace", fontSize: 12, marginTop: 10, letterSpacing: "0.05em" }}>
-            POWERED BY EU REGULATION 2021/782
-          </p>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", background: "#f5f2ed" }}>
+      <Head>
+        <title>EU Rail Refund — Get your money back</title>
+        <meta name="description" content="Claim train delay compensation automatically under EU Regulation 2021/782" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap');
+        * { box-sizing: border-box; }
+        input, select { transition: border-color 0.2s ease; }
+        input:focus, select:focus { border-color: #C8A96E !important; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #F0EDE8; }
+        ::-webkit-scrollbar-thumb { background: #E0DCD4; border-radius: 2px; }
+        option { background: #FFFFFF; }
+        .nav { display:flex; justify-content:space-between; align-items:center; padding:20px 48px; background:#0a1628; color:white; }
+        .nav-logo { font-family:'Playfair Display',serif; font-size:17px; font-weight:700; letter-spacing:0.02em; color:white; display:flex; align-items:center; gap:10px; }
+        .nav-logo-dot { width:8px; height:8px; background:#e8c547; border-radius:50%; }
+        .nav-right { font-size:13px; color:rgba(255,255,255,0.55); letter-spacing:0.08em; text-transform:uppercase; }
+        .ticker-bar { background:#e8c547; padding:9px 0; overflow:hidden; white-space:nowrap; }
+        .ticker-inner { display:inline-block; color:#0a1628; font-size:11px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; padding-right:40px; }
+        .hero-grid { display:grid; grid-template-columns:1fr 480px; min-height:calc(100vh - 86px); }
+        .hero-left { background:#0a1628; padding:72px 56px 64px; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; }
+        .hero-eyebrow { font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#e8c547; font-family:'DM Sans',sans-serif; font-weight:500; margin-bottom:28px; display:flex; align-items:center; gap:10px; }
+        .eyebrow-line { width:32px; height:1px; background:#e8c547; display:inline-block; }
+        .hero-headline { font-family:'Playfair Display',serif; font-size:clamp(52px,6vw,76px); font-weight:900; color:white; line-height:1.0; letter-spacing:-0.02em; margin-bottom:36px; }
+        .hero-headline em { font-style:italic; color:#e8c547; }
+        .hero-sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.65; max-width:440px; margin-bottom:52px; font-weight:300; }
+        .hero-sub strong { color:rgba(255,255,255,0.9); font-weight:500; }
+        .cta-group { display:flex; align-items:center; gap:24px; }
+        .cta-primary { background:#e8c547; color:#0a1628; border:none; padding:16px 32px; font-size:14px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:10px; transition:all 0.2s; }
+        .cta-primary:hover { background:#f0d060; transform:translateY(-1px); }
+        .cta-ghost { font-size:13px; color:rgba(255,255,255,0.45); letter-spacing:0.05em; font-family:'DM Sans',sans-serif; }
+        .live-route-card { margin-top:64px; border-top:1px solid rgba(255,255,255,0.1); padding-top:28px; }
+        .live-label { font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+        .live-dot { width:6px; height:6px; background:#4ade80; border-radius:50%; animation:pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .route-display { display:flex; align-items:center; gap:16px; transition:opacity 0.3s,transform 0.3s; }
+        .route-display.fade { opacity:0; transform:translateY(8px); }
+        .route-city { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:white; }
+        .route-arrow-line { width:40px; height:1px; background:rgba(255,255,255,0.2); }
+        .route-delay { display:flex; align-items:center; gap:6px; color:#f87171; font-size:12px; font-weight:500; margin-top:4px; }
+        .route-amount { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:#e8c547; }
+        .route-amount-label { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.1em; font-family:'DM Sans',sans-serif; text-align:right; margin-top:2px; }
+        .hero-right { background:#f5f2ed; padding:40px 36px; display:flex; flex-direction:column; justify-content:flex-start; border-left:1px solid rgba(0,0,0,0.06); overflow-y:auto; max-height:100vh; }
+        @media (max-width:900px) {
+          .hero-grid { grid-template-columns:1fr; }
+          .hero-left { padding:48px 28px; }
+          .nav { padding:16px 24px; }
+        }
+        @media (max-width:600px) {
+          [style*='gridTemplateColumns: "1fr 1fr"'] { grid-template-columns:1fr !important; }
+          [style*='gridTemplateColumns: "2fr 1fr"'] { grid-template-columns:1fr !important; }
+          [style*='gridTemplateColumns: "1fr 2fr"'] { grid-template-columns:1fr !important; }
+          [style*='gridTemplateColumns: "repeat(3, 1fr)"'] { grid-template-columns:1fr 1fr !important; }
+          [style*='gridTemplateColumns: "1fr 1fr 1fr"'] { grid-template-columns:1fr !important; }
+        }
+      `}</style>
+
+      {/* Nav */}
+      <nav className="nav">
+        <div className="nav-logo">
+          <div className="nav-logo-dot" />
+          EU Rail Refund
         </div>
+        <div className="nav-right">EU Regulation 2021/782</div>
+      </nav>
+
+      {/* Ticker */}
+      <div className="ticker-bar">
+        <span className="ticker-inner" style={{ transform: `translateX(${tickerPos}px)`, display: "inline-block" }}>
+          {TICKER_ITEMS.repeat(6)}
+        </span>
+      </div>
+
+      {/* Main grid */}
+      <div className="hero-grid">
+        {/* LEFT */}
+        <div className="hero-left">
+          <TrainLines />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div className="hero-eyebrow">
+              <span className="eyebrow-line" />
+              Cross-border train delay claims
+            </div>
+            <h1 className="hero-headline">
+              Your train<br />
+              was late.<br />
+              <em>Get paid.</em>
+            </h1>
+            <p className="hero-sub">
+              Delayed on a cross-EU train journey? Under <strong>EU Regulation 2021/782</strong>, you're entitled to up to 75% of your ticket price. We handle the paperwork — you keep 75% of what we recover.
+            </p>
+            <div className="cta-group">
+              <button className="cta-primary" onClick={() => document.getElementById('claim-form')?.scrollIntoView({ behavior: 'smooth' })}>
+                Check my claim <ArrowRight />
+              </button>
+              <span className="cta-ghost">No win, no fee</span>
+            </div>
+          </div>
+          <div className="live-route-card" style={{ position: "relative", zIndex: 1 }}>
+            <div className="live-label">
+              <span className="live-dot" />
+              Recent successful claims
+            </div>
+            <div className={`route-display ${animating ? "fade" : ""}`}>
+              <div><div className="route-city">{route.from}</div></div>
+              <div><div className="route-arrow-line" /></div>
+              <div>
+                <div className="route-city">{route.to}</div>
+                <div className="route-delay"><ClockIcon /> {route.delay} delay</div>
+              </div>
+              <div style={{ marginLeft: "auto" }}>
+                <div className="route-amount">{route.amount}</div>
+                <div className="route-amount-label">recovered</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — wizard */}
+        <div className="hero-right" id="claim-form">
+
         <div style={{ background: "#FFFFFF", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "clamp(20px, 5vw, 40px)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
           <ProgressBar step={step} />
           {step === "upload" && <UploadStep onNext={() => goTo("details")} setTicketData={setTicketData} setExtractedInfo={setExtractedInfo} />}
@@ -1091,6 +1261,8 @@ export default function App() {
           {step === "result" && <ResultStep extractedInfo={extractedInfo} onNext={() => goTo("form")} onBack={() => goTo("details")} setCompensation={setCompensation} />}
           {step === "form" && <FormStep extractedInfo={extractedInfo} compensation={compensation} onBack={() => goTo("result")} />}
         </div>
+        </div>
+      </div>
         <div style={{ marginTop: 28, background: "#FFFFFF", border: "1px solid #E8E4DC", borderRadius: 16, padding: "28px 28px 24px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24, marginBottom: 20 }}>
             <div>
@@ -1135,32 +1307,5 @@ export default function App() {
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#B0ADA8" }}>EU Rail Refund ApS · CVR: 12345678 · Denmark</span>
           </div>
         </div>
-      </div>
-      <Head>
-        <title>EU Rail Refund — Get your money back</title>
-        <meta name="description" content="Claim train delay compensation automatically under EU Regulation 2021/782" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500;700&display=swap');
-        * { box-sizing: border-box; }
-        input, select { transition: border-color 0.2s ease; }
-        input:focus, select:focus { border-color: #C8A96E !important; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #F0EDE8; }
-        ::-webkit-scrollbar-thumb { background: #E0DCD4; border-radius: 2px; }
-        option { background: #FFFFFF; }
-  @media (max-width: 600px) {
-    [style*='gridTemplateColumns: "1fr 1fr"'] { grid-template-columns: 1fr !important; }
-    [style*='gridTemplateColumns: "2fr 1fr"'] { grid-template-columns: 1fr !important; }
-    [style*='gridTemplateColumns: "1fr 2fr"'] { grid-template-columns: 1fr !important; }
-    [style*='gridTemplateColumns: "repeat(3, 1fr)"'] { grid-template-columns: 1fr 1fr !important; }
-    [style*='gridTemplateColumns: "1fr 1fr 1fr"'] { grid-template-columns: 1fr !important; }
-  }
-      `}</style>
-    </div>
   );
 }
-
-// 
