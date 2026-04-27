@@ -1307,5 +1307,8 @@ export default function App() {
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#B0ADA8" }}>EU Rail Refund ApS · CVR: 12345678 · Denmark</span>
           </div>
         </div>
+    </div>
+  </div>
+  </div>
   );
 }
