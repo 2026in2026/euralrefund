@@ -128,7 +128,6 @@ function ProgressBar({ step }) {
         );
       })}
     </div>
-  </div>
   );
 }
 
