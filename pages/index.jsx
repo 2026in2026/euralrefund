@@ -1251,18 +1251,16 @@ export default function App() {
             </div>
           </div>
         </div>
-        </div>
 
         {/* RIGHT — wizard */}
         <div className="hero-right" id="claim-form">
-
-        <div style={{ background: "#FFFFFF", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "clamp(20px, 5vw, 40px)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
-          <ProgressBar step={step} />
-          {step === "upload" && <UploadStep onNext={() => goTo("details")} setTicketData={setTicketData} setExtractedInfo={setExtractedInfo} />}
-          {step === "details" && <DetailsStep extractedInfo={extractedInfo} setExtractedInfo={setExtractedInfo} onNext={() => goTo("result")} onBack={() => goTo("upload")} />}
-          {step === "result" && <ResultStep extractedInfo={extractedInfo} onNext={() => goTo("form")} onBack={() => goTo("details")} setCompensation={setCompensation} />}
-          {step === "form" && <FormStep extractedInfo={extractedInfo} compensation={compensation} onBack={() => goTo("result")} />}
-        </div>
+          <div style={{ background: "#FFFFFF", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "clamp(20px, 5vw, 40px)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
+            <ProgressBar step={step} />
+            {step === "upload" && <UploadStep onNext={() => goTo("details")} setTicketData={setTicketData} setExtractedInfo={setExtractedInfo} />}
+            {step === "details" && <DetailsStep extractedInfo={extractedInfo} setExtractedInfo={setExtractedInfo} onNext={() => goTo("result")} onBack={() => goTo("upload")} />}
+            {step === "result" && <ResultStep extractedInfo={extractedInfo} onNext={() => goTo("form")} onBack={() => goTo("details")} setCompensation={setCompensation} />}
+            {step === "form" && <FormStep extractedInfo={extractedInfo} compensation={compensation} onBack={() => goTo("result")} />}
+          </div>
         </div>
       </div>
         <div style={{ marginTop: 28, background: "#FFFFFF", border: "1px solid #E8E4DC", borderRadius: 16, padding: "28px 28px 24px" }}>
@@ -1310,5 +1308,7 @@ export default function App() {
           </div>
         </div>
     </div>
+    </div>
+  </div>
   );
 }
